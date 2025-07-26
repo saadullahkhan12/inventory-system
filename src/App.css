@@ -1,0 +1,33 @@
+.css-5nwj3y {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  background: #03363d;
+  gap: 65px;
+  padding: 22px;
+  margin: 0px;
+} 
+body {
+ padding: 0px;
+ margin: 0px;
+}
+.menu-text{
+color: white;
+text-decoration: none;
+}
+.MuiFormControl-root.MuiFormControl-marginNormal.css-15nqhxc-MuiFormControl-root {
+  width: 50%;
+}
+label[data-shrink=false]+.MuiInputBase-formControl .css-w76bbz-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input {
+    width: 250px;
+}
+.MuiSelect-select.MuiSelect-outlined.MuiInputBase-input.MuiOutlinedInput-input.css-w76bbz-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input {
+    width: 250px;
+}
