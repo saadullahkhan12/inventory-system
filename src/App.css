@@ -28,3 +28,7 @@ text-decoration: none;
 .grid_customerType {
     width: 40%;
 }
+.css-1usuzwp-MuiButtonBase-root-MuiTab-root.Mui-selected {
+    color: #1976d2;
+    background: #e5e5e582;
+} 

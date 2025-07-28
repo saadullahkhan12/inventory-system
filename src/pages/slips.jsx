@@ -8,8 +8,9 @@ import SendIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 
+import Tooltip from '@mui/material/Tooltip';
 const Slips = () => {
-  const [customerName, setCustomerName] = useState('');
+  const [customerName, setCustomerName] = useState('Customer');
   const [paymentType, setPaymentType] = useState('');
   const [items, setItems] = useState([{ itemName: '', quantity: 1, price: 0, total: 0 }]);
   const [success, setSuccess] = useState(false);
@@ -57,18 +58,19 @@ const Slips = () => {
 
   return (
     <Box sx={{ maxWidth: 900, mx: 'auto', mt: 4, p: 2 }}>
-      <Typography variant="h4" gutterBottom>Create Slip</Typography>
+      <Typography variant="h4" className='font-serif' gutterBottom>Create Slip</Typography>
       <Paper sx={{ p: 3 }} elevation={3}>
         <form onSubmit={handleSubmit}>
           <Grid  container spacing={1}>
             <Grid className="grid_customerType" item xs={12}>
               <TextField
-                fullWidth
-                label="Customer Name"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                required
-              />
+  fullWidth
+  label="Customer Name"
+  value={customerName}
+  onChange={(e) => setCustomerName(e.target.value)}
+  required
+/>
+
             </Grid>
             <Grid className="grid_paymentType" item xs={12}>
               <FormControl fullWidth required>
@@ -125,9 +127,12 @@ const Slips = () => {
                         </Typography>
                       </Grid>
                       <Grid item xs={6} sm={2}>
-                        <IconButton color="error" onClick={() => removeItem(index)}>
-                          <DeleteIcon />
-                        </IconButton>
+                        
+                        <Tooltip title="Delete">
+      <IconButton color="error" onClick={() => removeItem(index)}>
+        <DeleteIcon />
+      </IconButton>
+    </Tooltip>
                       </Grid>
                     </Grid>
                   </CardContent>
@@ -136,9 +141,11 @@ const Slips = () => {
             ))}
 
             <Grid item xs={12}>
-              <Button onClick={addItem} startIcon={<AddIcon />} variant="outlined">
+              <Tooltip title="Add Item">
+                <Button onClick={addItem} startIcon={<AddIcon />} variant="outlined">
                 Add Item
               </Button>
+              </Tooltip>
             </Grid>
 
             <Grid item xs={12}>

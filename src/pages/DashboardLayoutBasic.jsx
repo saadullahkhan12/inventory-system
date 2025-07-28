@@ -1,131 +1,68 @@
 import * as React from 'react';
-import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import { createTheme } from '@mui/material/styles';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import DescriptionIcon from '@mui/icons-material/Description';
-import LayersIcon from '@mui/icons-material/Layers';
-import { AppProvider } from '@toolpad/core/AppProvider';
-import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import { useDemoRouter } from '@toolpad/core/internal';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { DataGrid } from '@mui/x-data-grid';
 
-import { Link } from 'react-router-dom';
-const NAVIGATION = [
+const columns = [
+  { field: 'id', headerName: 'ID', width: 90 },
   {
-    kind: 'header',
-    title: 'Main items',
+    field: 'firstName',
+    headerName: 'First name',
+    width: 150,
+    editable: true,
   },
   {
-    segment: 'dashboard', 
-    title: 'Dashboard',
-    icon: <DashboardIcon />,
+    field: 'lastName',
+    headerName: 'Last name',
+    width: 150,
+    editable: true,
   },
   {
-    segment: 'Icome',
-    title: 'Icome',
-    icon: <ShoppingCartIcon />,
+    field: 'age',
+    headerName: 'Age',
+    type: 'number',
+    width: 110,
+    editable: true,
   },
   {
-    kind: 'divider',
-  },
-  {
-    kind: 'header',
-    title: 'Analytics',
-  },
-  {
-    segment: 'reports',
-    title: 'Reports',
-    icon: <BarChartIcon />,
-    children: [
-      {
-        segment: 'sales',
-        title: 'Sales',
-        icon: <DescriptionIcon />,
-      },
-      {
-        segment: 'traffic',
-        title: 'Traffic',
-        icon: <DescriptionIcon />,
-      },
-    ],
-  },
-  {
-    segment: 'Add Itmes',
-    title: 'Add Itmes',
-    icon: <LayersIcon />,
+    field: 'fullName',
+    headerName: 'Full name',
+    description: 'This column has a value getter and is not sortable.',
+    sortable: false,
+    width: 160,
+    valueGetter: (value, row) => `${row.firstName || ''} ${row.lastName || ''}`,
   },
 ];
 
-const demoTheme = createTheme({
-  cssVariables: {
-    colorSchemeSelector: 'data-toolpad-color-scheme',
-  },
-  colorSchemes: { light: true, dark: true },
-  breakpoints: {
-    values: {
-      xs: 0,
-      sm: 600,
-      md: 600,
-      lg: 1200,
-      xl: 1536,
-    },
-  },
-});
-
+const rows = [
+  { id: 1, lastName: 'Snow', firstName: 'Jon', age: 14 },
+  { id: 2, lastName: 'Lannister', firstName: 'Cersei', age: 31 },
+  { id: 3, lastName: 'Lannister', firstName: 'Jaime', age: 31 },
+  { id: 4, lastName: 'Stark', firstName: 'Arya', age: 11 },
+  { id: 5, lastName: 'Targaryen', firstName: 'Daenerys', age: null },
+  { id: 6, lastName: 'Melisandre', firstName: null, age: 150 },
+  { id: 7, lastName: 'Clifford', firstName: 'Ferrara', age: 44 },
+  { id: 8, lastName: 'Frances', firstName: 'Rossini', age: 36 },
+  { id: 9, lastName: 'Roxie', firstName: 'Harvey', age: 65 },
+];
 function DemoPageContent({ pathname }) {
   return (
-    <Box
-      sx={{
-        py: 4,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
-      }}
-    >
-      <Typography>Dashboard content for {pathname}</Typography>
+     <Box sx={{ height: 400, width: '100%' }}>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        initialState={{
+          pagination: {
+            paginationModel: {
+              pageSize: 5,
+            },
+          },
+        }}
+        pageSizeOptions={[5]}
+        checkboxSelection
+        disableRowSelectionOnClick
+      />
     </Box>
-  );
-}
 
-DemoPageContent.propTypes = {
-  pathname: PropTypes.string.isRequired,
-};
+  )}
 
-function DashboardLayoutBasic(props) {
-  const { window } = props;
-  const router = useDemoRouter('/dashboard');
-  const demoWindow = window !== undefined ? window() : undefined;
-
-  return (
-    <BrowserRouter>
-      <AppProvider
-        navigation={NAVIGATION}
-        router={router}
-        theme={demoTheme}
-        window={demoWindow}
-      >
-        <DashboardLayout>
-          <Routes>
-            <Route path="/dashboard" element={<DemoPageContent pathname="Dashboard" />} />
-          
-            <Route path="*" element={<DemoPageContent pathname="Not Found" />} />
-          </Routes>
-        </DashboardLayout>
-      </AppProvider>
-    </BrowserRouter>
-  );
-}
-DashboardLayoutBasic.propTypes = {
-  /**
-   * Injected by the documentation to work in an iframe.
-   * Remove this when copying and pasting into your project.
-   */
-  window: PropTypes.func,
-};
-
-export default DashboardLayoutBasic;
+export default DemoPageContent;
