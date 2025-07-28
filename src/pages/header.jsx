@@ -22,7 +22,7 @@ function Header() {
         className="max-w-screen-md w-full"
       >
         <Tab label="Inventory" value="/Inventory" component={Link} to="/Inventory" />
-        <Tab label="Income" value="/Icome" component={Link} to="/Icome" />
+        <Tab label="Income" value="/Income" component={Link} to="/Income" />
         <Tab label="Slips" value="/Slips" component={Link} to="/Slips" />
       </Tabs>
     </Box>

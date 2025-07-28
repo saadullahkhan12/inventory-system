@@ -7,7 +7,7 @@ const initialProducts = [
   { id: "3", name: "Hand Sanitizer", sku: "HS-023", category: "Hygiene", quantity: 15, price: 4.0 },
 ];
 
-function Icome() {
+export function Income() {
   const [products, setProducts] = useState(initialProducts);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -161,4 +161,4 @@ function ProductModal({ product, onSave, onCancel }) {
   );
 }
 
-export default Icome;
+export default Income;

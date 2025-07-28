@@ -60,7 +60,7 @@ const Slips = () => {
       <Typography variant="h4" gutterBottom>Create Slip</Typography>
       <Paper sx={{ p: 3 }} elevation={3}>
         <form onSubmit={handleSubmit}>
-          <Grid container spacing={2}>
+          <Grid container spacing={1}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -147,9 +147,9 @@ const Slips = () => {
                 variant="contained"
                 endIcon={<SendIcon />}
                 sx={{
-                  backgroundColor: 'green',
-                  '&:hover': {
-                    backgroundColor: 'darkgreen',
+                 backgroundColor: '#1976d2',
+    '&:hover': {
+      backgroundColor: '#115293', 
                   },
                 }}
               >

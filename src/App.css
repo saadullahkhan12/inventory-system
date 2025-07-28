@@ -22,12 +22,12 @@ body {
 color: white;
 text-decoration: none;
 }
-.MuiFormControl-root.MuiFormControl-marginNormal.css-15nqhxc-MuiFormControl-root {
-  width: 50%;
+html body .MuiFormControl-root.MuiFormControl-marginNormal.css-15nqhxc-MuiFormControl-root {
+  width: 50% !important;
 }
-label[data-shrink=false]+.MuiInputBase-formControl .css-w76bbz-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input {
-    width: 250px;
+html body label[data-shrink=false]+.MuiInputBase-formControl .css-w76bbz-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input {
+    width: 250px !important;
 }
-.MuiSelect-select.MuiSelect-outlined.MuiInputBase-input.MuiOutlinedInput-input.css-w76bbz-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input {
-    width: 250px;
+html body .MuiSelect-select.MuiSelect-outlined.MuiInputBase-input.MuiOutlinedInput-input.css-w76bbz-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input {
+    width: 250px !important;
 }
