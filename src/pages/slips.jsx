@@ -56,7 +56,7 @@ const Slips = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', mt: 4, p: 2 }}>
+    <Box sx={{ maxWidth: 900, mx: 'auto', mt: 4, p: 2 }}>
       <Typography variant="h4" gutterBottom>Create Slip</Typography>
       <Paper sx={{ p: 3 }} elevation={3}>
         <form onSubmit={handleSubmit}>
@@ -70,7 +70,7 @@ const Slips = () => {
                 required
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid className="grid_paymentType" item xs={12}>
               <FormControl fullWidth required>
                 <InputLabel>Payment Type</InputLabel>
                 <Select
