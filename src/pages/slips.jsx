@@ -60,8 +60,8 @@ const Slips = () => {
       <Typography variant="h4" gutterBottom>Create Slip</Typography>
       <Paper sx={{ p: 3 }} elevation={3}>
         <form onSubmit={handleSubmit}>
-          <Grid container spacing={1}>
-            <Grid item xs={12}>
+          <Grid  container spacing={1}>
+            <Grid className="grid_customerType" item xs={12}>
               <TextField
                 fullWidth
                 label="Customer Name"
