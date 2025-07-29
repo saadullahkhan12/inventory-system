@@ -9,6 +9,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 
 import Tooltip from '@mui/material/Tooltip';
+import { Link } from 'react-router-dom';
 const Slips = () => {
   const [customerName, setCustomerName] = useState('Customer');
   const [paymentType, setPaymentType] = useState('');
@@ -162,13 +163,30 @@ const Slips = () => {
               >
                 Submit Slip
               </Button>
+               <Grid item xs={12} sx={{ mt: 2 }}>
+<Link to="/SlipPage" style={{ textDecoration: 'none' }}>
+<Button
+                type="button"
+                variant="contained"
+                endIcon={<SendIcon />}
+                sx={{
+                 backgroundColor: '#1976d2',
+    '&:hover': {
+      backgroundColor: '#115293', 
+                  },
+                }}
+              >
+                genrated Slip
+              </Button>
+              </Link>
+              </Grid>
             </Grid>
           </Grid>
         </form>
       </Paper>
 
       <Snackbar open={success} autoHideDuration={4000} onClose={handleClose}>
-        <Alert onClose={handleClose} severity="success" variant="filled" sx={{ width: '100%' }}>
+        <Alert onClose={handleClose} severity="blue" variant="filled" sx={{ width: '100%' }}>
           Slip successfully generated!
         </Alert>
       </Snackbar>
