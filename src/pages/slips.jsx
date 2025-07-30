@@ -186,7 +186,7 @@ const Slips = () => {
       </Paper>
 
       <Snackbar open={success} autoHideDuration={4000} onClose={handleClose}>
-        <Alert onClose={handleClose} severity="blue" variant="filled" sx={{ width: '100%' }}>
+        <Alert onClose={handleClose} severity="success" variant="filled" sx={{ width: '100%' }}>
           Slip successfully generated!
         </Alert>
       </Snackbar>

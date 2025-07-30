@@ -1,4 +1,10 @@
 import { useState } from "react";
+  import Button from '@mui/material/Button';
+  import DeleteIcon from '@mui/icons-material/Delete';
+import SendIcon from '@mui/icons-material/Send';
+import Stack from '@mui/material/Stack';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
+import EditIcon from '@mui/icons-material/Edit';
 
 // Sample Product Data
 const initialProducts = [
@@ -47,12 +53,19 @@ function Icome() {
       <div className="max-w-4xl mx-auto">
         <header className="mb-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Inventory Management</h1>
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
-            onClick={() => { setEditProduct(null); setShowModal(true); }}
-          >
-            + Add Product
-          </button>
+            
+            <Button  onClick={() => { setEditProduct(null); setShowModal(true); }}
+                            type="button"
+                            variant="contained"
+                            endIcon={<AddShoppingCartIcon />}
+                            sx={{
+                             backgroundColor: '#1976d2',
+                '&:hover': {
+                  backgroundColor: '#115293', 
+                              },
+                            }}
+                          >
+Add Product                          </Button>
         </header>
         <div className="mb-4 flex flex-row gap-2">
           <input
@@ -91,18 +104,15 @@ function Icome() {
                   </td>
                   <td className="px-4 py-3 text-gray-500">{product.price.toFixed(2)}</td>
                   <td className="px-4 py-3 flex gap-2">
-                    <button
-                      className="text-blue-600 hover:underline"
-                      onClick={() => startEdit(product)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="text-red-600 hover:underline"
-                      onClick={() => deleteProduct(product.id)}
-                    >
-                      Delete
-                    </button>
+                    
+                     <Stack direction="row" spacing={2}>
+      <Button  onClick={() => deleteProduct(product.id)} variant="outlined" color="error"  startIcon={<DeleteIcon />}>
+        Delete
+      </Button>
+      <Button onClick={() => startEdit(product)}  variant="contained" endIcon={<EditIcon  />}>
+        edit
+      </Button>
+    </Stack>
                   </td>
                 </tr>
               ))}
