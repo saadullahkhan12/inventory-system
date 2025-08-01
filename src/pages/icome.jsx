@@ -1,29 +1,33 @@
-import { useState } from "react";
-  import Button from '@mui/material/Button';
-  import DeleteIcon from '@mui/icons-material/Delete';
-import SendIcon from '@mui/icons-material/Send';
-import Stack from '@mui/material/Stack';
-import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
+import { useEffect, useState } from "react";
+import axios from "axios";
+import Button from '@mui/material/Button';
+import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
+import Stack from '@mui/material/Stack';
 
-// Sample Product Data
-const initialProducts = [
-  { id: "1", name: "Blue Pen", sku: "BP-001", category: "Stationery", quantity: 8, price: 1.5 },
-  { id: "2", name: "Notebook", sku: "NB-007", category: "Stationery", quantity: 3, price: 3.2 },
-  { id: "3", name: "Hand Sanitizer", sku: "HS-023", category: "Hygiene", quantity: 15, price: 4.0 },
-];
+const API_URL = "http://localhost:5000/api/items";
+
 
 function Icome() {
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(search.toLowerCase()) ||
-    product.sku.toLowerCase().includes(search.toLowerCase()) ||
-    product.category.toLowerCase().includes(search.toLowerCase())
-  );
+  // Load data
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get(API_URL);
+      setProducts(res.data);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
+  };
 
   const startEdit = (product) => {
     setEditProduct(product);
@@ -35,38 +39,54 @@ function Icome() {
     setShowModal(false);
   };
 
-  const saveProduct = (product) => {
-    if (product.id) {
-      setProducts(ps => ps.map(p => p.id === product.id ? product : p));
-    } else {
-      setProducts(ps => [...ps, { ...product, id: Math.random().toString(36).slice(2) }]);
+  const saveProduct = async (product) => {
+    try {
+      if (product._id) {
+        await axios.put(`${API_URL}/${product._id}`, product);
+      } else {
+        await axios.post(API_URL, product);
+      }
+      await fetchProducts();
+      clearEdit();
+    } catch (err) {
+      console.error("Save error:", err);
     }
-    clearEdit();
   };
 
-  const deleteProduct = (id) => {
-    setProducts(ps => ps.filter(p => p.id !== id));
+  const deleteProduct = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/${id}`);
+      setProducts(ps => ps.filter(p => p._id !== id));
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
   };
+
+  const filteredProducts = products.filter(product =>
+    product.name?.toLowerCase().includes(search.toLowerCase()) ||
+    product.sku?.toLowerCase().includes(search.toLowerCase()) ||
+    product.category?.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-2 md:px-8">
       <div className="max-w-4xl mx-auto">
         <header className="mb-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Inventory Management</h1>
-            
-            <Button  onClick={() => { setEditProduct(null); setShowModal(true); }}
-                            type="button"
-                            variant="contained"
-                            endIcon={<AddShoppingCartIcon />}
-                            sx={{
-                             backgroundColor: '#1976d2',
-                '&:hover': {
-                  backgroundColor: '#115293', 
-                              },
-                            }}
-                          >
-Add Product                          </Button>
+          <Button
+            onClick={() => { setEditProduct(null); setShowModal(true); }}
+            type="button"
+            variant="contained"
+            endIcon={<AddShoppingCartIcon />}
+            sx={{
+              backgroundColor: '#1976d2',
+              '&:hover': { backgroundColor: '#115293' },
+            }}
+          >
+            Add Product
+          </Button>
         </header>
+
         <div className="mb-4 flex flex-row gap-2">
           <input
             className="w-full md:w-72 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-500 bg-white"
@@ -76,6 +96,7 @@ Add Product                          </Button>
             onChange={e => setSearch(e.target.value)}
           />
         </div>
+
         <div className="overflow-auto rounded shadow bg-white">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-100">
@@ -89,33 +110,33 @@ Add Product                          </Button>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredProducts.length === 0 && (
+              {filteredProducts.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-gray-400">No products found.</td>
                 </tr>
+              ) : (
+                filteredProducts.map(product => (
+                  <tr key={product._id}>
+                    <td className="px-4 py-3 font-medium text-gray-700">{product.name}</td>
+                    <td className="px-4 py-3 text-gray-500">{product.sku}</td>
+                    <td className="px-4 py-3 text-gray-500">{product.category}</td>
+                    <td className={`px-4 py-3 text-gray-500 font-mono ${product.quantity <= 5 ? 'bg-red-50 text-red-700 font-bold rounded' : ''}`}>
+                      {product.quantity}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500">{product.price.toFixed(2)}</td>
+                    <td className="px-4 py-3 flex gap-2">
+                      <Stack direction="row" spacing={2}>
+                        <Button onClick={() => deleteProduct(product._id)} variant="outlined" color="error" startIcon={<DeleteIcon />}>
+                          Delete
+                        </Button>
+                        <Button onClick={() => startEdit(product)} variant="contained" endIcon={<EditIcon />}>
+                          Edit
+                        </Button>
+                      </Stack>
+                    </td>
+                  </tr>
+                ))
               )}
-              {filteredProducts.map(product => (
-                <tr key={product.id}>
-                  <td className="px-4 py-3 font-medium text-gray-700">{product.name}</td>
-                  <td className="px-4 py-3 text-gray-500">{product.sku}</td>
-                  <td className="px-4 py-3 text-gray-500">{product.category}</td>
-                  <td className={`px-4 py-3 text-gray-500 font-mono ${product.quantity <= 5 ? 'bg-red-50 text-red-700 font-bold rounded' : ''}`}>
-                    {product.quantity}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">{product.price.toFixed(2)}</td>
-                  <td className="px-4 py-3 flex gap-2">
-                    
-                     <Stack direction="row" spacing={2}>
-      <Button  onClick={() => deleteProduct(product.id)} variant="outlined" color="error"  startIcon={<DeleteIcon />}>
-        Delete
-      </Button>
-      <Button onClick={() => startEdit(product)}  variant="contained" endIcon={<EditIcon  />}>
-        edit
-      </Button>
-    </Stack>
-                  </td>
-                </tr>
-              ))}
             </tbody>
           </table>
         </div>
@@ -134,7 +155,7 @@ Add Product                          </Button>
 
 function ProductModal({ product, onSave, onCancel }) {
   const [form, setForm] = useState(
-    product ?? { id: "", name: "", sku: "", category: "", quantity: 0, price: 0 }
+    product ?? { name: "", sku: "", category: "", quantity: 0, price: 0 }
   );
 
   const handleChange = (e) => {
@@ -148,7 +169,7 @@ function ProductModal({ product, onSave, onCancel }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.name || !form.sku) return;
-    onSave(form);
+    onSave({ ...form, _id: product?._id });
   };
 
   return (
