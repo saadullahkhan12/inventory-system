@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Tabs, Tab, Box, Paper } from '@mui/material';
 import { Link, useLocation } from 'react-router-dom';
-import saeedLogo from '../assets/saeed.png';
+import saeedLogo from '../assets/ChatGPT Image Aug 6, 2025, 02_36_45 AM.png';
 
 function Header() {
   const location = useLocation();
