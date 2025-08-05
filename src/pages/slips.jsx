@@ -10,6 +10,12 @@ import AddIcon from '@mui/icons-material/Add';
 
 import Tooltip from '@mui/material/Tooltip';
 import { Link } from 'react-router-dom';
+
+
+
+
+
+const API_URL_slips = "https://inventory-system-back-end-production.up.railway.app/api/slips";
 const Slips = () => {
   const [customerName, setCustomerName] = useState('Customer');
   const [paymentType, setPaymentType] = useState('');
@@ -42,7 +48,7 @@ const Slips = () => {
     e.preventDefault();
     try {
       const slipData = { customerName, paymentType, items };
-      await axios.post('https://inventory-system-back-end-production.up.railway.app/api/slips', slipData);
+      await axios.post(API_URL_slips, slipData);
       setSuccess(true);
       setCustomerName('');
       setPaymentType('');
