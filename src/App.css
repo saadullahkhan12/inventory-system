@@ -32,3 +32,16 @@ text-decoration: none;
     color: #1976d2;
     background: #e5e5e582;
 } 
+.tabs_container{
+    margin-left: 30px;
+}
+
+button#income-tab-0 {
+    width: 100%;
+}
+button#income-tab-1 {
+    width: 100%;
+}
+button#income-tab-2 {
+    width: 100%;
+}
