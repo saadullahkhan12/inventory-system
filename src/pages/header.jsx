@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Tabs, Tab, Box, Paper } from '@mui/material';
 import { Link, useLocation } from 'react-router-dom';
+import saeedLogo from '../assets/saeed.png';
 
 function Header() {
   const location = useLocation();
@@ -28,7 +29,9 @@ function Header() {
         maxWidth: '1000px',
       }}
     >
-      <Tabs
+      <div className="header-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}> 
+
+<Tabs
         value={value}
         onChange={(event, newValue) => setValue(newValue)}
         textColor="primary"
@@ -57,6 +60,12 @@ function Header() {
         <Tab label="Income" value="/Income" component={Link} to="/Income" />
         <Tab label="Slips" value="/Slips" component={Link} to="/Slips" />
       </Tabs>
+
+<img src={saeedLogo} alt="Saeed Autos and Bike" style={{ width: 70 , marginRight: 2 }} />
+
+
+
+      </div>
     </Paper>
   );
 }
