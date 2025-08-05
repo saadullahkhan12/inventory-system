@@ -42,7 +42,7 @@ const Slips = () => {
     e.preventDefault();
     try {
       const slipData = { customerName, paymentType, items };
-      await axios.post('https://inventory-system-dzv6ng2bw-saadullahkhan12s-projects.vercel.app//api/slips', slipData);
+      await axios.post('https://inventory-system-back-end-production.up.railway.app//api/slips', slipData);
       setSuccess(true);
       setCustomerName('');
       setPaymentType('');

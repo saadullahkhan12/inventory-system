@@ -15,7 +15,7 @@ const SlipPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/slips')
+    axios.get('https://inventory-system-back-end-production.up.railway.app/api/slips')
       .then(res => {
         setSlips(res.data || []);
         setLoading(false);

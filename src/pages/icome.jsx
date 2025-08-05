@@ -6,7 +6,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import Stack from '@mui/material/Stack';
 
-const API_URL = "http://localhost:5000/api/items";
+const API_URL = "https://inventory-system-back-end-production.up.railway.app/api/items";
 
 
 function Icome() {
