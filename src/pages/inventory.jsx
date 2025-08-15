@@ -1,13 +1,14 @@
 import * as React from 'react';
+import PropTypes from 'prop-types';
+import axios from 'axios';
 import {
   Box, Tabs, Tab, Typography, Paper,
   Table, TableBody, TableCell, tableCellClasses,
   TableContainer, TableHead, TableRow
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import PropTypes from 'prop-types';
 
-// Styled MUI components
+// Styled table cells & rows
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
     backgroundColor: theme.palette.primary.main,
@@ -18,14 +19,27 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     fontSize: 14,
   },
 }));
+
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:nth-of-type(odd)': { backgroundColor: theme.palette.action.hover },
-  '&:last-child td, &:last-child th': { border: 0 },
+  '&:nth-of-type(odd)': {
+    backgroundColor: theme.palette.action.hover,
+  },
+  '&:last-child td, &:last-child th': {
+    border: 0,
+  },
 }));
 
-function CustomTabPanel({ children, value, index, ...other }) {
+// Tab panel component
+function CustomTabPanel(props) {
+  const { children, value, index, ...other } = props;
   return (
-    <div role="tabpanel" hidden={value !== index} {...other}>
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`income-tabpanel-${index}`}
+      aria-labelledby={`income-tab-${index}`}
+      {...other}
+    >
       {value === index && <Box sx={{ p: 2 }}>{children}</Box>}
     </div>
   );
@@ -33,6 +47,7 @@ function CustomTabPanel({ children, value, index, ...other }) {
 CustomTabPanel.propTypes = {
   children: PropTypes.node, value: PropTypes.number.isRequired, index: PropTypes.number.isRequired,
 };
+
 function a11yProps(index) {
   return {
     id: `income-tab-${index}`,
@@ -40,33 +55,20 @@ function a11yProps(index) {
   };
 }
 
-// Sample static data
-const sampleData = [
-  {
-    date: '2025-08-05',
-    totalIncome: 1200,
-    productsSold: [
-      { productName: 'Blue Pen', quantity: 10, unitPrice: 10, totalPrice: 100 },
-      { productName: 'Notebook', quantity: 5, unitPrice: 40, totalPrice: 200 },
-    ]
-  },
-  {
-    date: '2025-08-04',
-    totalIncome: 900,
-    productsSold: [
-      { productName: 'Marker', quantity: 3, unitPrice: 50, totalPrice: 150 },
-      { productName: 'Eraser', quantity: 20, unitPrice: 15, totalPrice: 300 },
-    ]
-  }
-];
-
-export default function IcomePage() {
+export default function Inventory() {
   const [value, setValue] = React.useState(0);
+  const [daily, setDaily] = React.useState([]);
+  const [weekly, setWeekly] = React.useState([]);
+  const [monthly, setMonthly] = React.useState([]);
+
+  React.useEffect(() => {
+    axios.get('http://localhost:5000/api/icomes/today').then(res => setDaily(res.data));
+    axios.get('http://localhost:5000/api/icomes/weekly').then(res => setWeekly(res.data));
+    axios.get('http://localhost:5000/api/icomes/monthly').then(res => setMonthly(res.data));
+  }, []);
 
   const getTotalIncome = (data) => data.reduce((sum, d) => sum + d.totalIncome, 0);
-  const getTotalItems = (data) => data.reduce((sum, d) =>
-    sum + d.productsSold.reduce((s, p) => s + p.quantity, 0), 0
-  );
+  const getTotalItems = (data) => data.reduce((sum, d) => sum + d.productsSold.reduce((s, p) => s + p.quantity, 0), 0);
 
   const renderTable = (data) => (
     <>
@@ -107,18 +109,21 @@ export default function IcomePage() {
     </>
   );
 
+  const handleChange = (event, newValue) => setValue(newValue);
+
   return (
     <Box sx={{ marginTop: '60px', width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={value} onChange={(e, newVal) => setValue(newVal)} aria-label="Income Tabs">
+        <Tabs value={value} onChange={handleChange} aria-label="Income Tabs">
           <Tab label="Daily Income" {...a11yProps(0)} />
           <Tab label="Weekly Income" {...a11yProps(1)} />
           <Tab label="Monthly Income" {...a11yProps(2)} />
         </Tabs>
       </Box>
-      <CustomTabPanel value={value} index={0}>{renderTable(sampleData)}</CustomTabPanel>
-      <CustomTabPanel value={value} index={1}>{renderTable(sampleData)}</CustomTabPanel>
-      <CustomTabPanel value={value} index={2}>{renderTable(sampleData)}</CustomTabPanel>
+      <CustomTabPanel value={value} index={0}>{renderTable(daily)}</CustomTabPanel>
+      <CustomTabPanel value={value} index={1}>{renderTable(weekly)}</CustomTabPanel>
+      <CustomTabPanel value={value} index={2}>{renderTable(monthly)}</CustomTabPanel>
     </Box>
   );
 }
+import DeleteIcon from '@mui/icons-material/Delete';
