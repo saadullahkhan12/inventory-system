@@ -1,60 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
-  Box, Grid, Paper, Typography, TextField, Button, FormControl, InputLabel, Select,
-  MenuItem, Snackbar, Alert, Card, CardContent, IconButton
+  Box, Grid, Paper, Typography, TextField, Button,
+  FormControl, InputLabel, Select, MenuItem,
+  Snackbar, Alert, Card, CardContent, IconButton, Tooltip
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-
-import Tooltip from '@mui/material/Tooltip';
 import { Link } from 'react-router-dom';
 
+const API_URL_SLIPS = "https://inventory-system-back-end-production.up.railway.app/api/slips";
+const API_URL_ITEMS = "https://inventory-system-back-end-production.up.railway.app/api/items";
 
-
-
-
-const API_URL_slips = "https://inventory-system-back-end-production.up.railway.app/api/slips";
 const Slips = () => {
   const [customerName, setCustomerName] = useState('Customer');
   const [paymentType, setPaymentType] = useState('');
-  const [items, setItems] = useState([{ itemName: '', quantity: 1, price: 0, total: 0 }]);
+  const [items, setItems] = useState([{ _id: '', quantity: 1 }]);
+  const [inventoryItems, setInventoryItems] = useState([]);
   const [success, setSuccess] = useState(false);
 
+  // Fetch inventory items
+  useEffect(() => {
+    axios.get(API_URL_ITEMS)
+      .then(res => setInventoryItems(res.data))
+      .catch(err => console.error("Error fetching items:", err));
+  }, []);
+
+  // Handle item/qty change
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...items];
     updatedItems[index][field] = value;
-
-    if (field === 'quantity' || field === 'price') {
-      const quantity = parseInt(updatedItems[index].quantity) || 0;
-      const price = parseFloat(updatedItems[index].price) || 0;
-      updatedItems[index].total = quantity * price;
-    }
-
     setItems(updatedItems);
   };
 
-  const addItem = () => {
-    setItems([...items, { itemName: '', quantity: 1, price: 0, total: 0 }]);
-  };
+  // Add/remove item row
+  const addItem = () => setItems([...items, { _id: '', quantity: 1 }]);
+  const removeItem = (index) => setItems(items.filter((_, idx) => idx !== index));
 
-  const removeItem = (index) => {
-    const updatedItems = items.filter((_, idx) => idx !== index);
-    setItems(updatedItems);
-  };
-
+  // Submit slip
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const slipData = { customerName, paymentType, items };
-      await axios.post(API_URL_slips, slipData);
+      const slipData = {
+        customerName,
+        paymentType,
+        items: items.map(i => ({ _id: i._id, quantity: Number(i.quantity) }))
+      };
+
+      await axios.post(API_URL_SLIPS, slipData);
       setSuccess(true);
+
+      // Reset form
       setCustomerName('');
       setPaymentType('');
-      setItems([{ itemName: '', quantity: 1, price: 0, total: 0 }]);
+      setItems([{ _id: '', quantity: 1 }]);
     } catch (err) {
-      console.error(err);
+      console.error("Error creating slip:", err);
     }
   };
 
@@ -65,21 +67,26 @@ const Slips = () => {
 
   return (
     <Box sx={{ maxWidth: 900, mx: 'auto', mt: 4, p: 2 }}>
-      <Typography variant="h4" className='font-serif' gutterBottom>Create Slip</Typography>
+      <Typography variant="h4" className='font-serif' gutterBottom>
+        Create Slip
+      </Typography>
+
       <Paper sx={{ p: 3 }} elevation={3}>
         <form onSubmit={handleSubmit}>
-          <Grid  container spacing={1}>
-            <Grid className="grid_customerType" item xs={12}>
+          <Grid container spacing={2}>
+            {/* Customer */}
+            <Grid item xs={12}>
               <TextField
-  fullWidth
-  label="Customer Name"
-  value={customerName}
-  onChange={(e) => setCustomerName(e.target.value)}
-  required
-/>
-
+                fullWidth
+                label="Customer Name"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                required
+              />
             </Grid>
-            <Grid className="grid_paymentType" item xs={12}>
+
+            {/* Payment Type */}
+            <Grid item xs={12}>
               <FormControl fullWidth required>
                 <InputLabel>Payment Type</InputLabel>
                 <Select
@@ -94,21 +101,31 @@ const Slips = () => {
               </FormControl>
             </Grid>
 
+            {/* Items */}
             {items.map((item, index) => (
               <Grid item xs={12} key={index}>
                 <Card variant="outlined" sx={{ mb: 2 }}>
                   <CardContent>
                     <Grid container spacing={2} alignItems="center">
-                      <Grid item xs={12} sm={4}>
-                        <TextField
-                          fullWidth
-                          label="Item Name"
-                          value={item.itemName}
-                          onChange={(e) => handleItemChange(index, 'itemName', e.target.value)}
-                          required
-                        />
+                      {/* Item Selector */}
+                      <Grid item xs={12} sm={6}>
+                        <FormControl fullWidth required>
+                          <InputLabel>Item</InputLabel>
+                          <Select
+                            value={item._id}
+                            onChange={(e) => handleItemChange(index, '_id', e.target.value)}
+                          >
+                            {inventoryItems.map(invItem => (
+                              <MenuItem key={invItem._id} value={invItem._id}>
+                                {invItem.name} (Stock: {invItem.quantity})
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
                       </Grid>
-                      <Grid item xs={6} sm={2}>
+
+                      {/* Quantity */}
+                      <Grid item xs={6} sm={3}>
                         <TextField
                           fullWidth
                           type="number"
@@ -118,28 +135,14 @@ const Slips = () => {
                           required
                         />
                       </Grid>
-                      <Grid item xs={6} sm={2}>
-                        <TextField
-                          fullWidth
-                          type="number"
-                          label="Price"
-                          value={item.price}
-                          onChange={(e) => handleItemChange(index, 'price', e.target.value)}
-                          required
-                        />
-                      </Grid>
-                      <Grid item xs={6} sm={2}>
-                        <Typography variant="body1" sx={{ mt: 1 }}>
-                          Total: {item.total}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6} sm={2}>
-                        
+
+                      {/* Delete */}
+                      <Grid item xs={6} sm={3}>
                         <Tooltip title="Delete">
-      <IconButton color="error" onClick={() => removeItem(index)}>
-        <DeleteIcon />
-      </IconButton>
-    </Tooltip>
+                          <IconButton color="error" onClick={() => removeItem(index)}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
                       </Grid>
                     </Grid>
                   </CardContent>
@@ -147,50 +150,50 @@ const Slips = () => {
               </Grid>
             ))}
 
+            {/* Add Item */}
             <Grid item xs={12}>
               <Tooltip title="Add Item">
                 <Button onClick={addItem} startIcon={<AddIcon />} variant="outlined">
-                Add Item
-              </Button>
+                  Add Item
+                </Button>
               </Tooltip>
             </Grid>
 
+            {/* Submit */}
             <Grid item xs={12}>
               <Button
                 type="submit"
                 variant="contained"
                 endIcon={<SendIcon />}
                 sx={{
-                 backgroundColor: '#1976d2',
-    '&:hover': {
-      backgroundColor: '#115293', 
-                  },
+                  backgroundColor: '#1976d2',
+                  '&:hover': { backgroundColor: '#115293' }
                 }}
               >
                 Submit Slip
               </Button>
-               <Grid item xs={12} sx={{ mt: 2 }}>
-<Link to="/SlipPage" style={{ textDecoration: 'none' }}>
-<Button
-                type="button"
-                variant="contained"
-                endIcon={<SendIcon />}
-                sx={{
-                 backgroundColor: '#1976d2',
-    '&:hover': {
-      backgroundColor: '#115293', 
-                  },
-                }}
-              >
-                genrated Slip
-              </Button>
-              </Link>
+
+              <Grid item xs={12} sx={{ mt: 2 }}>
+                <Link to="/SlipPage" style={{ textDecoration: 'none' }}>
+                  <Button
+                    type="button"
+                    variant="contained"
+                    endIcon={<SendIcon />}
+                    sx={{
+                      backgroundColor: '#1976d2',
+                      '&:hover': { backgroundColor: '#115293' }
+                    }}
+                  >
+                    Generated Slip
+                  </Button>
+                </Link>
               </Grid>
             </Grid>
           </Grid>
         </form>
       </Paper>
 
+      {/* Success message */}
       <Snackbar open={success} autoHideDuration={4000} onClose={handleClose}>
         <Alert onClose={handleClose} severity="success" variant="filled" sx={{ width: '100%' }}>
           Slip successfully generated!
