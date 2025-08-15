@@ -1,97 +1,80 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import {
-  Box, Grid, Paper, Typography, TextField, Button,
-  FormControl, InputLabel, Select, MenuItem,
-  Snackbar, Alert, Card, CardContent, IconButton, Tooltip
+  Box, Grid, Paper, Typography, TextField, Button, FormControl, InputLabel, Select,
+  MenuItem, Snackbar, Alert, Card, CardContent, IconButton
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import Tooltip from '@mui/material/Tooltip';
 import { Link } from 'react-router-dom';
 
-const API_URL_SLIPS = "https://inventory-system-back-end-production.up.railway.app/api/slips";
-const API_URL_ITEMS = "https://inventory-system-back-end-production.up.railway.app/api/items";
+const API_URL_slips = "https://inventory-system-back-end-production.up.railway.app/api/slips";
 
 const Slips = () => {
   const [customerName, setCustomerName] = useState('Customer');
   const [paymentType, setPaymentType] = useState('');
-  const [items, setItems] = useState([{ _id: '', category: '', sku: '', quantity: 1 }]);
-  const [inventoryItems, setInventoryItems] = useState([]);
+  const [items, setItems] = useState([{ itemName: '', quantity: 1, price: 0, total: 0 }]);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(false); // new state for stock error
 
-  // Fetch inventory
-  useEffect(() => {
-    axios.get(API_URL_ITEMS)
-      .then(res => setInventoryItems(res.data))
-      .catch(err => console.error("Error fetching items:", err));
-  }, []);
-
-  // Unique categories and SKUs
-  const categories = [...new Set(inventoryItems.map(i => i.category).filter(Boolean))];
-  const skus = [...new Set(inventoryItems.map(i => i.sku).filter(Boolean))];
-
-  // Handle item/qty change
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...items];
     updatedItems[index][field] = value;
 
-    // If selecting item by _id, auto-fill category & sku
-    if (field === "_id") {
-      const selected = inventoryItems.find(i => i._id === value);
-      if (selected) {
-        updatedItems[index].category = selected.category || '';
-        updatedItems[index].sku = selected.sku || '';
-      }
+    if (field === 'quantity' || field === 'price') {
+      const quantity = parseInt(updatedItems[index].quantity) || 0;
+      const price = parseFloat(updatedItems[index].price) || 0;
+      updatedItems[index].total = quantity * price;
     }
 
     setItems(updatedItems);
   };
 
-  // Add/remove row
-  const addItem = () => setItems([...items, { _id: '', category: '', sku: '', quantity: 1 }]);
-  const removeItem = (index) => setItems(items.filter((_, idx) => idx !== index));
+  const addItem = () => {
+    setItems([...items, { itemName: '', quantity: 1, price: 0, total: 0 }]);
+  };
 
-  // Submit slip
+  const removeItem = (index) => {
+    const updatedItems = items.filter((_, idx) => idx !== index);
+    setItems(updatedItems);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // stock validation check
+    const stockInvalid = items.some(item => item.quantity <= 0 || item.price <= 0);
+    if (stockInvalid) {
+      setError(true);
+      return; // stop submission
+    }
+
     try {
-      const slipData = {
-        customerName,
-        paymentType,
-        items: items.map(i => ({
-          _id: i._id,
-          quantity: Number(i.quantity)
-        }))
-      };
-
-      await axios.post(API_URL_SLIPS, slipData);
+      const slipData = { customerName, paymentType, items };
+      await axios.post(API_URL_slips, slipData);
       setSuccess(true);
-
-      // Reset
       setCustomerName('');
       setPaymentType('');
-      setItems([{ _id: '', category: '', sku: '', quantity: 1 }]);
+      setItems([{ itemName: '', quantity: 1, price: 0, total: 0 }]);
     } catch (err) {
-      console.error("Error creating slip:", err);
+      console.error(err);
     }
   };
 
   const handleClose = (_, reason) => {
     if (reason === 'clickaway') return;
     setSuccess(false);
+    setError(false);
   };
 
   return (
-    <Box sx={{ maxWidth: 1000, mx: 'auto', mt: 4, p: 2 }}>
-      <Typography variant="h4" className='font-serif' gutterBottom>
-        Create Slip
-      </Typography>
-
+    <Box sx={{ maxWidth: 900, mx: 'auto', mt: 4, p: 2 }}>
+      <Typography variant="h4" className='font-serif' gutterBottom>Create Slip</Typography>
       <Paper sx={{ p: 3 }} elevation={3}>
         <form onSubmit={handleSubmit}>
-          <Grid container spacing={2}>
-            {/* Customer */}
+          <Grid container spacing={1}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -102,7 +85,6 @@ const Slips = () => {
               />
             </Grid>
 
-            {/* Payment */}
             <Grid item xs={12}>
               <FormControl fullWidth required>
                 <InputLabel>Payment Type</InputLabel>
@@ -118,73 +100,46 @@ const Slips = () => {
               </FormControl>
             </Grid>
 
-            {/* Items */}
             {items.map((item, index) => (
               <Grid item xs={12} key={index}>
                 <Card variant="outlined" sx={{ mb: 2 }}>
                   <CardContent>
                     <Grid container spacing={2} alignItems="center">
-                      {/* Item Name */}
-                      <Grid item xs={12} sm={3}>
-                        <FormControl fullWidth required>
-                          <InputLabel>Item</InputLabel>
-                          <Select
-                            value={item._id}
-                            onChange={(e) => handleItemChange(index, '_id', e.target.value)}
-                          >
-                            {inventoryItems.map(invItem => (
-                              <MenuItem key={invItem._id} value={invItem._id}>
-                                {invItem.name}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
+                      <Grid item xs={12} sm={4}>
+                        <TextField
+                          fullWidth
+                          label="Item Name"
+                          value={item.itemName}
+                          onChange={(e) => handleItemChange(index, 'itemName', e.target.value)}
+                          required
+                        />
                       </Grid>
-
-                      {/* Category */}
-                      <Grid item xs={12} sm={3}>
-                        <FormControl fullWidth>
-                          <InputLabel>Category</InputLabel>
-                          <Select
-                            value={item.category}
-                            onChange={(e) => handleItemChange(index, 'category', e.target.value)}
-                          >
-                            {categories.map((cat, i) => (
-                              <MenuItem key={i} value={cat}>{cat}</MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-
-                      {/* SKU */}
-                      <Grid item xs={12} sm={3}>
-                        <FormControl fullWidth>
-                          <InputLabel>SKU</InputLabel>
-                          <Select
-                            value={item.sku}
-                            onChange={(e) => handleItemChange(index, 'sku', e.target.value)}
-                          >
-                            {skus.map((s, i) => (
-                              <MenuItem key={i} value={s}>{s}</MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-
-                      {/* Quantity */}
                       <Grid item xs={6} sm={2}>
                         <TextField
                           fullWidth
                           type="number"
-                          label="Qty"
+                          label="Quantity"
                           value={item.quantity}
                           onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
                           required
                         />
                       </Grid>
-
-                      {/* Delete */}
-                      <Grid item xs={6} sm={1}>
+                      <Grid item xs={6} sm={2}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="Price"
+                          value={item.price}
+                          onChange={(e) => handleItemChange(index, 'price', e.target.value)}
+                          required
+                        />
+                      </Grid>
+                      <Grid item xs={6} sm={2}>
+                        <Typography variant="body1" sx={{ mt: 1 }}>
+                          Total: {item.total}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6} sm={2}>
                         <Tooltip title="Delete">
                           <IconButton color="error" onClick={() => removeItem(index)}>
                             <DeleteIcon />
@@ -197,7 +152,6 @@ const Slips = () => {
               </Grid>
             ))}
 
-            {/* Add Item */}
             <Grid item xs={12}>
               <Tooltip title="Add Item">
                 <Button onClick={addItem} startIcon={<AddIcon />} variant="outlined">
@@ -206,7 +160,6 @@ const Slips = () => {
               </Tooltip>
             </Grid>
 
-            {/* Submit */}
             <Grid item xs={12}>
               <Button
                 type="submit"
@@ -214,12 +167,11 @@ const Slips = () => {
                 endIcon={<SendIcon />}
                 sx={{
                   backgroundColor: '#1976d2',
-                  '&:hover': { backgroundColor: '#115293' }
+                  '&:hover': { backgroundColor: '#115293' },
                 }}
               >
                 Submit Slip
               </Button>
-
               <Grid item xs={12} sx={{ mt: 2 }}>
                 <Link to="/SlipPage" style={{ textDecoration: 'none' }}>
                   <Button
@@ -228,7 +180,7 @@ const Slips = () => {
                     endIcon={<SendIcon />}
                     sx={{
                       backgroundColor: '#1976d2',
-                      '&:hover': { backgroundColor: '#115293' }
+                      '&:hover': { backgroundColor: '#115293' },
                     }}
                   >
                     Generated Slip
@@ -240,10 +192,17 @@ const Slips = () => {
         </form>
       </Paper>
 
-      {/* Success */}
+      {/* success snackbar */}
       <Snackbar open={success} autoHideDuration={4000} onClose={handleClose}>
         <Alert onClose={handleClose} severity="success" variant="filled" sx={{ width: '100%' }}>
           Slip successfully generated!
+        </Alert>
+      </Snackbar>
+
+      {/* error snackbar */}
+      <Snackbar open={error} autoHideDuration={4000} onClose={handleClose}>
+        <Alert onClose={handleClose} severity="error" variant="filled" sx={{ width: '100%' }}>
+          Stock are zero, please add!
         </Alert>
       </Snackbar>
     </Box>
