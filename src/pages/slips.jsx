@@ -11,7 +11,7 @@ import Tooltip from '@mui/material/Tooltip';
 import { Link } from 'react-router-dom';
 
 const API_URL_SLIPS = "https://inventory-system-back-end-production.up.railway.app/api/slips";
-const API_URL_PRODUCTS = "https://inventory-system-back-end-production.up.railway.app/api/itmes";
+const API_URL_PRODUCTS = "https://inventory-system-back-end-production.up.railway.app/api/items";
 
 const Slips = () => {
   const [formData, setFormData] = useState({
@@ -31,7 +31,6 @@ const Slips = () => {
     severity: 'success'
   });
 
-  // Fetch products and categories on component mount
   useEffect(() => {
     const fetchProducts = async () => {
       try {

@@ -72,7 +72,7 @@ export default function Inventory() {
       await axios.delete(`${API_URL}/${id}`);
       setProducts(ps => ps.filter(p => p._id !== id));
     } catch (err) {
-      console.error("Delete error:", err);
+      console.error("Delete error", err);
     }
   };
 
@@ -85,7 +85,7 @@ export default function Inventory() {
   return (
     <Box sx={{ p: 4 }}>
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" fontWeight="bold">Inventory Management</Typography>
+        <Typography variant="h4" fontWeight="bold">Inventory Managemens</Typography>
         <Button
           variant="contained"
           endIcon={<AddShoppingCartIcon />}
