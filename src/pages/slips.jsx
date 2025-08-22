@@ -10,7 +10,7 @@ import AddIcon from '@mui/icons-material/Add';
 import Tooltip from '@mui/material/Tooltip';
 import { Link } from 'react-router-dom';
 
-const API_URL_SLIPS = "https://inventory-system-back-end-production.up.railway.app/api/slips";
+const API_URL_slips = "https://inventory-system-back-end-production.up.railway.app/api/slips/";
 const API_URL_PRODUCTS = "https://inventory-system-back-end-production.up.railway.app/api/items";
 
 const Slips = () => {
@@ -36,7 +36,7 @@ const Slips = () => {
       try {
         const response = await axios.get(API_URL_PRODUCTS);
         setProducts(response.data);
-        
+
         // Extract unique categories
         const uniqueCategories = [...new Set(response.data.map(product => product.category))];
         setCategories(uniqueCategories);
@@ -47,7 +47,7 @@ const Slips = () => {
         setLoading(prev => ({ ...prev, products: false }));
       }
     };
-    
+
     fetchProducts();
   }, []);
 
@@ -73,7 +73,7 @@ const Slips = () => {
 
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...formData.items];
-    
+
     if (field === 'category') {
       updatedItems[index] = {
         ...updatedItems[index],
@@ -82,7 +82,7 @@ const Slips = () => {
         price: 0,
         total: 0
       };
-    } 
+    }
     else if (field === 'product') {
       const selectedProduct = products.find(p => p._id === value);
       updatedItems[index] = {
@@ -91,7 +91,7 @@ const Slips = () => {
         price: selectedProduct?.price || 0,
         total: (updatedItems[index].quantity || 1) * (selectedProduct?.price || 0)
       };
-    } 
+    }
     else if (field === 'quantity') {
       const quantity = parseInt(value) || 0;
       updatedItems[index] = {
@@ -99,14 +99,14 @@ const Slips = () => {
         quantity,
         total: quantity * updatedItems[index].price
       };
-    } 
+    }
     else {
       updatedItems[index] = {
         ...updatedItems[index],
         [field]: value
       };
     }
-    
+
     setFormData({
       ...formData,
       items: updatedItems
@@ -160,63 +160,43 @@ const Slips = () => {
     return true;
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  try {
-    const totalQuantity = items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0);
-    const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
+    if (!validateForm()) return;
 
-    const slipData = { customerName, paymentType, items, totalQuantity, totalAmount };
+    setLoading(prev => ({ ...prev, submission: true }));
 
-    await axios.post(API_URL_slips, slipData);
+    try {
+      const totalQuantity = formData.items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0);
+      const totalAmount = formData.items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
 
-    setSuccess(true);
-    setCustomerName('');
-    setPaymentType('');
-    setItems([{ itemName: '', quantity: 1, price: 0, total: 0 }]);
-  } catch (err) {
-    console.error("Slip generation error:", err.response ? err.response.data : err.message);
-    alert("Error: " + (err.response ? JSON.stringify(err.response.data) : err.message));
-  }
-};
-
-
-      const outOfStockItems = stockCheckResults.filter(item => item.availableStock < item.requestedQuantity);
-
-      if (outOfStockItems.length > 0) {
-        const productNames = outOfStockItems.map(item => item.productName).join(', ');
-        showNotification('error', `Insufficient stock for: ${productNames}`);
-        return;
-      }
-
-      // Prepare slip data
       const slipData = {
         customerName: formData.customerName,
         paymentType: formData.paymentType,
         items: formData.items.map(item => ({
-          productId: item.product,
           itemName: products.find(p => p._id === item.product)?.name || '',
           quantity: item.quantity,
           price: item.price,
           total: item.total
-        }))
+        })),
+        totalQuantity,
+        totalAmount
       };
 
-      // Submit slip
-      await axios.post(API_URL_SLIPS, slipData);
-      
+      await axios.post(API_URL_slips, slipData);
+
       // Reset form on success
       setFormData({
         customerName: 'Customer',
         paymentType: '',
         items: [{ category: '', product: '', quantity: 1, price: 0, total: 0 }]
       });
-      
+
       showNotification('success', 'Slip successfully generated!');
     } catch (error) {
       console.error('Error generating slip:', error);
-      showNotification('error', 'Failed to generate slip. Please try again.');
+      showNotification('error', error.response?.data?.message || 'Failed to generate slip. Please try again.');
     } finally {
       setLoading(prev => ({ ...prev, submission: false }));
     }
@@ -335,8 +315,8 @@ const Slips = () => {
                       </Grid>
                       <Grid item xs={6} sm={1}>
                         <Tooltip title="Delete Item">
-                          <IconButton 
-                            color="error" 
+                          <IconButton
+                            color="error"
                             onClick={() => removeItem(index)}
                             disabled={formData.items.length <= 1}
                           >
@@ -352,9 +332,9 @@ const Slips = () => {
 
             <Grid item xs={12}>
               <Tooltip title="Add Item">
-                <Button 
-                  onClick={addItem} 
-                  startIcon={<AddIcon />} 
+                <Button
+                  onClick={addItem}
+                  startIcon={<AddIcon />}
                   variant="outlined"
                 >
                   Add Item
@@ -400,9 +380,9 @@ const Slips = () => {
         </form>
       </Paper>
 
-      <Snackbar 
-        open={notification.open} 
-        autoHideDuration={6000} 
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
         onClose={handleCloseNotification}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
