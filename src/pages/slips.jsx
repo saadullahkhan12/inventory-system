@@ -160,26 +160,27 @@ const Slips = () => {
     return true;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      setLoading(prev => ({ ...prev, submission: true }));
+  try {
+    const totalQuantity = items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0);
+    const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
 
-      // Check stock availability
-      const stockCheckResults = await Promise.all(
-        formData.items.map(async (item) => {
-          const response = await axios.get(`${API_URL_PRODUCTS}/${item.product}`);
-          return {
-            productId: item.product,
-            productName: response.data.name,
-            availableStock: response.data.stock,
-            requestedQuantity: item.quantity
-          };
-        })
-      );
+    const slipData = { customerName, paymentType, items, totalQuantity, totalAmount };
+
+    await axios.post(API_URL_slips, slipData);
+
+    setSuccess(true);
+    setCustomerName('');
+    setPaymentType('');
+    setItems([{ itemName: '', quantity: 1, price: 0, total: 0 }]);
+  } catch (err) {
+    console.error("Slip generation error:", err.response ? err.response.data : err.message);
+    alert("Error: " + (err.response ? JSON.stringify(err.response.data) : err.message));
+  }
+};
+
 
       const outOfStockItems = stockCheckResults.filter(item => item.availableStock < item.requestedQuantity);
 
