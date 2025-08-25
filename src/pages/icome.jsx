@@ -22,7 +22,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 
-const API_URL = "https://inventory-system-back-end-production.up.railway.app/api/items";
+const API_URL = "/api/items";
 
 export default function Inventory() {
   const [products, setProducts] = useState([]);

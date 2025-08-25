@@ -10,8 +10,8 @@ import AddIcon from '@mui/icons-material/Add';
 import Tooltip from '@mui/material/Tooltip';
 import { Link } from 'react-router-dom';
 
-const API_URL_slips = "https://inventory-system-back-end-production.up.railway.app/api/slips";
-const API_URL_PRODUCTS = "https://inventory-system-back-end-production.up.railway.app/api/items";
+const API_URL_slips = "/api/slips";
+const API_URL_PRODUCTS = "/api/items";
 
 const Slips = () => {
   const [formData, setFormData] = useState({
