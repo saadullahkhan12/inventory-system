@@ -160,47 +160,54 @@ const Slips = () => {
     return true;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ // Update the handleSubmit function
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!validateForm()) return;
+  if (!validateForm()) return;
 
-    setLoading(prev => ({ ...prev, submission: true }));
+  setLoading(prev => ({ ...prev, submission: true }));
 
-    try {
-      const totalQuantity = formData.items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0);
-      const totalAmount = formData.items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
-
-      const slipData = {
-        customerName: formData.customerName,
-        paymentType: formData.paymentType,
-        items: formData.items.map(item => ({
-          itemName: products.find(p => p._id === item.product)?.name || '',
-          quantity: item.quantity,
-          price: item.price,
-          total: item.total
-        })),
-        totalQuantity,
-        totalAmount
+  try {
+    // Prepare items with proper structure
+    const itemsWithDetails = formData.items.map(item => {
+      const selectedProduct = products.find(p => p._id === item.product);
+      return {
+        itemName: selectedProduct?.name || '',
+        quantity: item.quantity,
+        price: item.price,
+        total: item.total
       };
+    });
 
-      await axios.post(API_URL_slips, slipData);
+    const totalQuantity = itemsWithDetails.reduce((sum, item) => sum + item.quantity, 0);
+    const totalAmount = itemsWithDetails.reduce((sum, item) => sum + item.total, 0);
 
-      // Reset form on success
-      setFormData({
-        customerName: 'Customer',
-        paymentType: '',
-        items: [{ category: '', product: '', quantity: 1, price: 0, total: 0 }]
-      });
+    const slipData = {
+      customerName: formData.customerName,
+      paymentType: formData.paymentType,
+      items: itemsWithDetails,
+      totalQuantity,
+      totalAmount
+    };
 
-      showNotification('success', 'Slip successfully generated!');
-    } catch (error) {
-      console.error('Error generating slip:', error);
-      showNotification('error', error.response?.data?.message || 'Failed to generate slip. Please try again.');
-    } finally {
-      setLoading(prev => ({ ...prev, submission: false }));
-    }
-  };
+    await axios.post(API_URL_slips, slipData);
+
+    // Reset form on success
+    setFormData({
+      customerName: 'Customer',
+      paymentType: '',
+      items: [{ category: '', product: '', quantity: 1, price: 0, total: 0 }]
+    });
+
+    showNotification('success', 'Slip successfully generated!');
+  } catch (error) {
+    console.error('Error generating slip:', error);
+    showNotification('error', error.response?.data?.message || 'Failed to generate slip. Please try again.');
+  } finally {
+    setLoading(prev => ({ ...prev, submission: false }));
+  }
+};
 
   if (loading.products) {
     return (
@@ -278,9 +285,10 @@ const Slips = () => {
                             {products
                               .filter(product => product.category === item.category)
                               .map((product) => (
-                                <MenuItem key={product._id} value={product._id}>
-                                  {product.name} (Stock: {product.stock})
-                                </MenuItem>
+                                // Change this line in the product selection menu:
+<MenuItem key={product._id} value={product._id}>
+  {product.name} (Stock: {product.quantity}) {/* Changed from product.stock */}
+</MenuItem>
                               ))}
                           </Select>
                         </FormControl>
