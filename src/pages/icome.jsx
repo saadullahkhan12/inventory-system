@@ -1,214 +1,363 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect, useState } from "react";
 import {
   Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
+  Grid,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  TextField,
+  MenuItem,
+  Button,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  Card,
+  CardContent,
+  Chip,
   Paper,
-  Stack
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
+} from "@mui/material";
+import { useNotification } from "../utils/notifications";
+import { axiosApi } from "../utils/api";
 
-const API_URL = "/api/items";
-
-export default function Inventory() {
+const Income = () => {
+  const [loading, setLoading] = useState({ 
+    products: true, 
+    income: true, 
+    submitting: false,
+    testing: false 
+  });
   const [products, setProducts] = useState([]);
-  const [search, setSearch] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [editProduct, setEditProduct] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [incomes, setIncomes] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState({});
+  const [incomeSummary, setIncomeSummary] = useState(null);
+  const { notification, showNotification, hideNotification } = useNotification();
 
+  // Fetch products and income data
   useEffect(() => {
-    fetchProducts();
+    const fetchData = async () => {
+      try {
+        // Fetch products
+        const productsRes = await axiosApi.items.getAll();
+        const productsData = productsRes.data?.items || [];
+        setProducts(Array.isArray(productsData) ? productsData : []);
+        
+        const uniqueCategories = [...new Set(productsData.map((p) => p.category || 'Uncategorized'))];
+        setCategories(uniqueCategories);
+
+        // Fetch income records
+        const incomeRes = await axiosApi.income.getAll({ limit: 50 });
+        const incomeData = incomeRes.data?.records || incomeRes.data || [];
+        setIncomes(Array.isArray(incomeData) ? incomeData : []);
+
+        // Fetch income summary
+        const summaryRes = await axiosApi.income.getSummary();
+        setIncomeSummary(summaryRes.data);
+
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        showNotification("error", "Failed to fetch data: " + (err.response?.data?.error || err.message));
+      } finally {
+        setLoading({ products: false, income: false, submitting: false, testing: false });
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const fetchProducts = async () => {
-    try {
-      const res = await axios.get(API_URL);
-      setProducts(res.data);
-    } catch (err) {
-      console.error("Fetch error:", err);
+  const handleProductSelect = (category, productId) => {
+    setSelectedProducts((prev) => ({ ...prev, [category]: productId }));
+  };
+
+  const handleAddEntry = async (category) => {
+    const productId = selectedProducts[category];
+    if (!productId) {
+      showNotification("error", "Please select a product first");
+      return;
     }
-  };
 
-  const startEdit = (product) => {
-    setEditProduct(product);
-    setShowModal(true);
-  };
+    const selectedProduct = products.find((p) => p._id === productId);
+    if (!selectedProduct) {
+      showNotification("error", "Selected product not found");
+      return;
+    }
 
-  const clearEdit = () => {
-    setEditProduct(null);
-    setShowModal(false);
-  };
+    const incomeData = {
+      totalIncome: selectedProduct.price,
+      productsSold: [
+        {
+          productName: selectedProduct.name,
+          sku: selectedProduct.sku || "N/A",
+          quantity: 1,
+          unitPrice: selectedProduct.price,
+          totalPrice: selectedProduct.price,
+          category: selectedProduct.category || "General",
+        },
+      ],
+      customerName: "Manual Entry",
+      paymentMethod: "Cash",
+      notes: `Manual income entry for ${selectedProduct.name}`,
+    };
 
-  const saveProduct = async (product) => {
     try {
-      if (product._id) {
-        await axios.put(`${API_URL}/${product._id}`, product);
-      } else {
-        await axios.post(API_URL, product);
+      setLoading((prev) => ({ ...prev, submitting: true }));
+      const res = await axiosApi.income.create(incomeData);
+      
+      if (res.data) {
+        showNotification("success", `Income added: ₹${selectedProduct.price} for ${selectedProduct.name}`);
+        setSelectedProducts((prev) => ({ ...prev, [category]: "" }));
+        
+        // Refresh income data
+        const incomeRes = await axiosApi.income.getAll({ limit: 50 });
+        const incomeData = incomeRes.data?.records || incomeRes.data || [];
+        setIncomes(Array.isArray(incomeData) ? incomeData : []);
+        
+        const summaryRes = await axiosApi.income.getSummary();
+        setIncomeSummary(summaryRes.data);
       }
-      fetchProducts();
-      clearEdit();
     } catch (err) {
-      console.error("Save error:", err);
+      console.error('Income creation error:', err);
+      const errorMsg = err.response?.data?.error || err.message || "Failed to add income entry";
+      showNotification("error", errorMsg);
+    } finally {
+      setLoading((prev) => ({ ...prev, submitting: false }));
     }
   };
 
-  const deleteProduct = async (id) => {
+  const handleTestIncomeAPI = async () => {
+    setLoading(prev => ({ ...prev, testing: true }));
     try {
-      await axios.delete(`${API_URL}/${id}`);
-      setProducts(ps => ps.filter(p => p._id !== id));
-    } catch (err) {
-      console.error("Delete error", err);
+      console.log('🧪 Testing Income API...');
+      
+      // Test 1: Create test income
+      const testIncomeData = {
+        totalIncome: 150,
+        productsSold: [{
+          productName: 'Test Product',
+          sku: 'TEST-001',
+          quantity: 1,
+          unitPrice: 150,
+          totalPrice: 150,
+          category: 'Test'
+        }],
+        customerName: 'Test Customer',
+        paymentMethod: 'Cash',
+        notes: 'Test income entry from frontend'
+      };
+
+      const createRes = await axiosApi.income.create(testIncomeData);
+      console.log('✅ Create income:', createRes.data);
+
+      // Test 2: Get all incomes
+      const getAllRes = await axiosApi.income.getAll({ limit: 5 });
+      console.log('✅ Get incomes:', getAllRes.data);
+
+      // Test 3: Get summary
+      const summaryRes = await axiosApi.income.getSummary();
+      console.log('✅ Income summary:', summaryRes.data);
+
+      showNotification('success', '✅ Income API tests passed! Check console for details.');
+    } catch (error) {
+      console.error('❌ Income API test failed:', error);
+      const errorMsg = error.response?.data?.error || error.message;
+      showNotification('error', `Income API test failed: ${errorMsg}`);
+    } finally {
+      setLoading(prev => ({ ...prev, testing: false }));
     }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name?.toLowerCase().includes(search.toLowerCase()) ||
-    product.sku?.toLowerCase().includes(search.toLowerCase()) ||
-    product.category?.toLowerCase().includes(search.toLowerCase())
-  );
+  if (loading.products || loading.income) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress size={60} />
+          <Typography variant="h6" sx={{ mt: 2 }}>Loading income data...</Typography>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" fontWeight="bold">Inventory Managemens</Typography>
-        <Button
-          variant="contained"
-          endIcon={<AddShoppingCartIcon />}
-          onClick={() => { setEditProduct(null); setShowModal(true); }}
-        >
-          Add Product
-        </Button>
-      </Box>
+    <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
+      <Typography variant="h4" component="h1" sx={{ mb: 1, fontWeight: 'bold' }}>
+        Income Management
+      </Typography>
+      <Typography variant="subtitle1" color="textSecondary" sx={{ mb: 4 }}>
+        Manage income entries and track sales
+      </Typography>
 
-      <TextField
-        label="Search products"
-        variant="outlined"
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        fullWidth
-        sx={{ mb: 3, maxWidth: 300 }}
-      />
+      {/* Income Summary */}
+      {incomeSummary && (
+        <Card sx={{ mb: 4, bgcolor: 'primary.main', color: 'white' }}>
+          <CardContent>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="h6">Total Income</Typography>
+                <Typography variant="h4">₹{incomeSummary.totalIncome?.toLocaleString() || 0}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="h6">Today's Income</Typography>
+                <Typography variant="h4">₹{incomeSummary.todayIncome?.toLocaleString() || 0}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="h6">Monthly Income</Typography>
+                <Typography variant="h4">₹{incomeSummary.monthIncome?.toLocaleString() || 0}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="h6">Total Records</Typography>
+                <Typography variant="h4">{incomeSummary.totalRecords || 0}</Typography>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      )}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableCell>Name</TableCell>
-              <TableCell>SKU</TableCell>
-              <TableCell>Category</TableCell>
-              <TableCell>Quantity</TableCell>
-              <TableCell>Price ($)</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredProducts.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">No products found</TableCell>
-              </TableRow>
-            ) : (
-              filteredProducts.map(product => (
-                <TableRow key={product._id}>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.sku}</TableCell>
-                  <TableCell>{product.category}</TableCell>
-                  <TableCell
-                    sx={{
-                      color: product.quantity <= 5 ? 'error.main' : 'text.primary',
-                      fontWeight: product.quantity <= 5 ? 'bold' : 'normal'
-                    }}
-                  >
-                    {product.quantity}
-                  </TableCell>
-                  <TableCell>${product.price.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={1}>
-                      <Button
+      {/* Debug Tools */}
+      <Paper sx={{ p: 2, mb: 4, bgcolor: 'background.default' }}>
+        <Typography variant="h6" gutterBottom>API Debug Tools</Typography>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Button 
+            variant="outlined" 
+            onClick={handleTestIncomeAPI}
+            disabled={loading.testing}
+            startIcon={loading.testing ? <CircularProgress size={16} /> : null}
+          >
+            {loading.testing ? 'Testing...' : '🧪 Test Income API'}
+          </Button>
+          <Chip 
+            label={`${products.length} Products Loaded`} 
+            color="primary" 
+            variant="outlined" 
+          />
+          <Chip 
+            label={`${incomes.length} Income Records`} 
+            color="secondary" 
+            variant="outlined" 
+          />
+        </Box>
+      </Paper>
+
+      {/* Income Entry by Category */}
+      <Typography variant="h5" sx={{ mb: 3 }}>Quick Income Entry</Typography>
+      
+      {categories.length > 0 ? (
+        <Grid container spacing={3}>
+          {categories.map((category) => {
+            const categoryProducts = products.filter(p => p.category === category);
+            return (
+              <Grid item xs={12} sm={6} md={4} key={category}>
+                <Card variant="outlined" sx={{ height: '100%' }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center' 
+                    }}>
+                      {category}
+                      <Chip 
+                        label={`${categoryProducts.length} items`} 
+                        size="small" 
+                        color="primary" 
                         variant="outlined"
-                        color="error"
-                        startIcon={<DeleteIcon />}
-                        onClick={() => deleteProduct(product._id)}
-                      >
-                        Delete
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        endIcon={<EditIcon />}
-                        onClick={() => startEdit(product)}
-                      >
-                        Edit
-                      </Button>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                      />
+                    </Typography>
+                    
+                    <TextField
+                      select
+                      label="Select Product"
+                      fullWidth
+                      size="small"
+                      sx={{ mb: 2 }}
+                      value={selectedProducts[category] || ""}
+                      onChange={(e) => handleProductSelect(category, e.target.value)}
+                    >
+                      <MenuItem value="">
+                        <em>Choose a product...</em>
+                      </MenuItem>
+                      {categoryProducts.map((product) => (
+                        <MenuItem key={product._id} value={product._id}>
+                          {product.name} - ₹{product.price} 
+                          {product.quantity <= 10 && (
+                            <span style={{ color: '#f44336', marginLeft: '8px' }}>
+                              (Low stock: {product.quantity})
+                            </span>
+                          )}
+                        </MenuItem>
+                      ))}
+                    </TextField>
 
-      {/* Modal */}
-      <ProductModal open={showModal} onClose={clearEdit} onSave={saveProduct} product={editProduct} />
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      onClick={() => handleAddEntry(category)}
+                      disabled={loading.submitting || !selectedProducts[category]}
+                      startIcon={
+                        loading.submitting ? <CircularProgress size={16} /> : null
+                      }
+                    >
+                      {loading.submitting ? "Adding..." : `Add ₹${ 
+                        products.find(p => p._id === selectedProducts[category])?.price || 0 
+                      } Income`}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
+      ) : (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="h6" color="textSecondary">
+            No products found. Please add products first.
+          </Typography>
+        </Box>
+      )}
+
+      {/* Recent Income Entries */}
+      {incomes.length > 0 && (
+        <Box sx={{ mt: 6 }}>
+          <Typography variant="h5" gutterBottom>Recent Income Entries</Typography>
+          <Grid container spacing={2}>
+            {incomes.slice(0, 6).map((income, index) => (
+              <Grid item xs={12} sm={6} md={4} key={income._id || index}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="subtitle2" gutterBottom>
+                      {new Date(income.date).toLocaleDateString()}
+                    </Typography>
+                    <Typography variant="h6" color="primary">
+                      ₹{income.totalIncome}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {income.productsSold?.[0]?.productName || 'No products'}
+                    </Typography>
+                    <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                      {income.paymentMethod} • {income.customerName}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
+
+      {/* Notification Snackbar */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={hideNotification}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={hideNotification}
+          severity={notification.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
-}
+};
 
-function ProductModal({ open, onClose, onSave, product }) {
-  const [form, setForm] = useState({
-    name: '',
-    sku: '',
-    category: '',
-    quantity: 0,
-    price: 0
-  });
-
-  useEffect(() => {
-    if (product) setForm(product);
-  }, [product]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm(f => ({
-      ...f,
-      [name]: name === 'quantity' || name === 'price' ? Number(value) : value
-    }));
-  };
-
-  const handleSubmit = () => {
-    if (!form.name || !form.sku) return;
-    onSave({ ...form, _id: product?._id });
-  };
-
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{product ? 'Edit Product' : 'Add Product'}</DialogTitle>
-      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-        <TextField name="name" label="Product Name" value={form.name} onChange={handleChange} required />
-        <TextField name="sku" label="SKU" value={form.sku} onChange={handleChange} required />
-        <TextField name="category" label="Category" value={form.category} onChange={handleChange} />
-        <TextField name="quantity" type="number" label="Quantity" value={form.quantity} onChange={handleChange} />
-        <TextField name="price" type="number" label="Price ($)" value={form.price} onChange={handleChange} />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={handleSubmit}>Save</Button>
-      </DialogActions>
-    </Dialog>
-  );  
-}
+export default Income;

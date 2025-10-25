@@ -31,39 +31,38 @@ function Header() {
     >
       <div className="header-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}> 
 
-<Tabs
-        value={value}
-        onChange={(event, newValue) => setValue(newValue)}
-        textColor="primary"
-        indicatorColor="primary"
-        variant="scrollable"
-        scrollButtons="auto"
-        centered
-        sx={{
-           '& .MuiTabs-indicator': {
-      display: 'none', // 🔥 This removes the underline
-    },
-          '& .MuiTab-root': {
-            fontWeight: 500,
-            fontSize: '1rem',
-            borderRadius: 2,
-            mx: 1,
-            textTransform: 'none',
-          },
-          '& .Mui-selected': {
-            backgroundColor: 'primary.main',
-            color: '#fff !important',
-          },
-        }}
-      >
-        <Tab label="Inventory" value="/Inventory" component={Link} to="/Inventory" />
-        <Tab label="Income" value="/Income" component={Link} to="/Income" />
-        <Tab label="Slips" value="/Slips" component={Link} to="/Slips" />
-      </Tabs>
+        <Tabs
+          value={value}
+          onChange={(event, newValue) => setValue(newValue)}
+          textColor="primary"
+          indicatorColor="primary"
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            '& .MuiTabs-indicator': {
+              display: 'none',
+            },
+            '& .MuiTab-root': {
+              fontWeight: 500,
+              fontSize: '1rem',
+              borderRadius: 2,
+              mx: 1,
+              textTransform: 'none',
+            },
+            '& .Mui-selected': {
+              backgroundColor: 'primary.main',
+              color: '#fff !important',
+            },
+          }}
+        >
+          <Tab label="Inventory" value="/inventory" component={Link} to="/inventory" />
+          <Tab label="Add Items" value="/additems" component={Link} to="/additems" />
+          <Tab label="Income" value="/income" component={Link} to="/income" />
+          <Tab label="Create Slip" value="/slips" component={Link} to="/slips" />
+          <Tab label="View Slips" value="/slippage" component={Link} to="/slippage" />
+        </Tabs>
 
-<img src={saeedLogo} alt="Saeed Autos and Bike" style={{ width: 70 , marginRight: 2 }} />
-
-
+        <img src={saeedLogo} alt="Saeed Autos and Bike" style={{ width: 70 , marginRight: 2 }} />
 
       </div>
     </Paper>

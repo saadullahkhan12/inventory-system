@@ -1,32 +1,27 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // Correct import from 'react-router-dom'
-
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
-
-import Inventory from './pages/inventory'; // Corrected import path
-
-import Header from './pages/header'; // Fixed typo: 'Hedaer' to 'Header'
+import Inventory from './pages/inventory';
+import AddItems from './pages/addItems';
+import Header from './pages/header';
 import DashboardLayoutBasic from './pages/DashboardLayoutBasic';
 import Slips from './pages/slips';
-import Income from './pages/icome'; // Corrected import path
+import Income from './pages/icome';
 import SlipPage from './pages/slippage';
-// Corrected import path
-
 
 function App() {
   return (
     <>
       <Router>
-        <Header /> {/* Corrected Header */}
+        <Header />
         <Routes>
-          <Route path="/Slips" element={<Slips/>} />
-          <Route path="/income" element={<Income/>} />
-<Route path="/slip" element={<SlipPage />} />
-
-          <Route path="/Inventory" element={<Inventory />} />
-          <Route path="/Pagecontent" element={<DashboardLayoutBasic />} />
-          <Route path="/SlipPage" element={<SlipPage />} />
-
+          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/additems" element={<AddItems />} />
+          <Route path="/income" element={<Income />} />
+          <Route path="/slips" element={<Slips />} />
+          <Route path="/slippage" element={<SlipPage />} />
+          <Route path="/pagecontent" element={<DashboardLayoutBasic />} />
+          <Route path="/" element={<Navigate to="/inventory" replace />} />
         </Routes>
       </Router>
     </>
