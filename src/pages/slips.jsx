@@ -6,11 +6,13 @@ import {
 import SendIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { axiosApi } from '../utils/api';
 import { useNotification } from '../utils/notifications';
 
 const Slips = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     customerName: '',
     customerPhone: '',
@@ -61,13 +63,7 @@ const Slips = () => {
     const updatedItems = [...formData.items];
 
     if (field === 'category') {
-      updatedItems[index] = { 
-        category: value, 
-        product: '', 
-        quantity: 1, 
-        price: 0, 
-        total: 0 
-      };
+      updatedItems[index] = { category: value, product: '', quantity: 1, price: 0, total: 0 };
     } else if (field === 'product') {
       const product = products.find(p => p._id === value);
       updatedItems[index].product = value;
@@ -85,13 +81,7 @@ const Slips = () => {
   const addItem = () => {
     setFormData(prev => ({
       ...prev,
-      items: [...prev.items, { 
-        category: '', 
-        product: '', 
-        quantity: 1, 
-        price: 0, 
-        total: 0 
-      }]
+      items: [...prev.items, { category: '', product: '', quantity: 1, price: 0, total: 0 }]
     }));
   };
 
@@ -108,7 +98,6 @@ const Slips = () => {
     const discount = Number(formData.discount) || 0;
     const tax = Number(formData.tax) || 0;
     const totalAmount = subtotal - discount + tax;
-    
     return { subtotal, discount, tax, totalAmount };
   };
 
@@ -118,12 +107,10 @@ const Slips = () => {
       showNotification('error', 'Enter customer name.');
       return false;
     }
-    
     if (!formData.paymentMethod) {
       showNotification('error', 'Select payment method.');
       return false;
     }
-    
     for (const item of formData.items) {
       if (!item.category) {
         showNotification('error', 'Select category for all items.');
@@ -138,19 +125,16 @@ const Slips = () => {
         return false;
       }
     }
-    
     return true;
   };
 
-  // ✅ Submit Slip (creates slip and income automatically via backend)
+  // ✅ Submit Slip (creates slip and redirects to print page)
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-
     setLoading(prev => ({ ...prev, submission: true }));
 
     try {
-      // Format products for slip
       const productsData = formData.items.map(item => {
         const product = products.find(p => p._id === item.product);
         return {
@@ -168,20 +152,19 @@ const Slips = () => {
         customerPhone: formData.customerPhone,
         customerEmail: formData.customerEmail,
         products: productsData,
-        subtotal: subtotal,
-        discount: discount,
-        tax: tax,
-        totalAmount: totalAmount,
+        subtotal,
+        discount,
+        tax,
+        totalAmount,
         paymentMethod: formData.paymentMethod,
         notes: formData.notes
       };
 
-      console.log('📦 Sending slip data:', slipData);
-
-      // ✅ Create Slip (this will automatically create income entry via backend transaction)
       const response = await axiosApi.slips.create(slipData);
-      
+      const createdSlip = response.data;
+
       showNotification('success', 'Slip created successfully! Inventory updated.');
+      navigate(`/slips/${createdSlip.slip._id}`);
 
       // Reset form
       setFormData({
@@ -197,10 +180,10 @@ const Slips = () => {
 
     } catch (err) {
       console.error('❌ Slip creation error:', err);
-      const errorMsg = err.response?.data?.error || 
-                      err.response?.data?.details || 
-                      err.message || 
-                      'Failed to create slip';
+      const errorMsg = err.response?.data?.error ||
+                       err.response?.data?.details ||
+                       err.message ||
+                       'Failed to create slip';
       showNotification('error', errorMsg);
     } finally {
       setLoading(prev => ({ ...prev, submission: false }));
@@ -342,15 +325,14 @@ const Slips = () => {
                               .filter(p => p.category === item.category)
                               .map(product => (
                                 <MenuItem key={product._id} value={product._id}>
-                                  {product.name} - ₹{product.price} 
+                                  {product.name} - ₹{product.price}
                                   {product.quantity <= 10 && (
                                     <span style={{ color: '#f44336', marginLeft: '8px' }}>
                                       (Low stock: {product.quantity})
                                     </span>
                                   )}
                                 </MenuItem>
-                              ))
-                            }
+                              ))}
                           </Select>
                         </FormControl>
                       </Grid>
@@ -367,12 +349,7 @@ const Slips = () => {
                       </Grid>
 
                       <Grid item xs={6} sm={2}>
-                        <TextField 
-                          fullWidth
-                          label="Price"
-                          value={`₹${item.price}`}
-                          disabled
-                        />
+                        <TextField fullWidth label="Price" value={`₹${item.price}`} disabled />
                       </Grid>
 
                       <Grid item xs={6} sm={1}>
@@ -398,12 +375,7 @@ const Slips = () => {
             ))}
 
             <Grid item xs={12}>
-              <Button 
-                onClick={addItem} 
-                startIcon={<AddIcon />} 
-                variant="outlined"
-                color="primary"
-              >
+              <Button onClick={addItem} startIcon={<AddIcon />} variant="outlined" color="primary">
                 Add Another Item
               </Button>
             </Grid>
@@ -486,7 +458,7 @@ const Slips = () => {
                   )}
                 </Button>
 
-                <Link to="/slippage" style={{ textDecoration: 'none' }}>
+                <Link to="/SlipPage" style={{ textDecoration: 'none' }}>
                   <Button variant="outlined" size="large">
                     View All Slips
                   </Button>
@@ -510,9 +482,9 @@ const Slips = () => {
         onClose={hideNotification}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert 
-          severity={notification.severity} 
-          variant="filled" 
+        <Alert
+          severity={notification.severity}
+          variant="filled"
           onClose={hideNotification}
           sx={{ width: '100%' }}
         >

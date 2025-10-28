@@ -1,175 +1,450 @@
-import React from 'react';
-import {
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { 
+  Container, 
+  Paper, 
+  Typography, 
+  Button, 
   Box,
-  Paper,
-  Typography,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Divider,
-  Chip
+  Stack,
+  Alert,
+  CircularProgress
 } from '@mui/material';
+import { ArrowBack, Download, Print } from '@mui/icons-material';
+import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 
-const SlipInvoice = ({ slip }) => {
-  // Safe data access with comprehensive fallbacks
-  if (!slip) {
+// PDF Styles
+const styles = StyleSheet.create({
+  page: { 
+    padding: 30, 
+    fontSize: 12,
+    fontFamily: 'Helvetica'
+  },
+  header: { 
+    textAlign: 'center', 
+    marginBottom: 20,
+    borderBottom: '1pt solid #000',
+    paddingBottom: 10
+  },
+  companyName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5
+  },
+  slipTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10
+  },
+  customerInfo: {
+    marginBottom: 15,
+    padding: 10,
+    backgroundColor: '#f5f5f5'
+  },
+  table: { 
+    display: "table", 
+    width: "auto", 
+    borderStyle: "solid", 
+    borderWidth: 1, 
+    marginBottom: 20 
+  },
+  tableRow: { 
+    flexDirection: "row" 
+  },
+  tableColHeader: { 
+    width: "25%", 
+    borderStyle: "solid", 
+    borderWidth: 1, 
+    backgroundColor: "#eee", 
+    padding: 8,
+    fontWeight: 'bold'
+  },
+  tableCol: { 
+    width: "25%", 
+    borderStyle: "solid", 
+    borderWidth: 1, 
+    padding: 8 
+  },
+  totals: { 
+    marginTop: 10, 
+    textAlign: "right",
+    borderTop: '1pt solid #000',
+    paddingTop: 10
+  },
+  totalAmount: {
+    fontSize: 14, 
+    fontWeight: 'bold'
+  },
+  footer: {
+    marginTop: 30, 
+    textAlign: "center",
+    borderTop: '1pt solid #000',
+    paddingTop: 10
+  }
+});
+
+// PDF Document Component
+const SlipPDFDocument = ({ slip }) => (
+  <Document>
+    <Page size="A4" style={styles.page}>
+      <View style={styles.header}>
+        <Text style={styles.companyName}>Saeed Auto</Text>
+        <Text>Contact: +92 300 1234567</Text>
+        <Text style={styles.slipTitle}>SALES SLIP</Text>
+      </View>
+
+      {/* Customer Info */}
+      <View style={styles.customerInfo}>
+        <Text>Slip #: {slip.slipNumber || slip._id}</Text>
+        <Text>Date: {new Date(slip.date).toLocaleString()}</Text>
+        <Text>Customer: {slip.customerName}</Text>
+        <Text>Phone: {slip.customerPhone}</Text>
+      </View>
+
+      {/* Products Table */}
+      <View style={styles.table}>
+        <View style={styles.tableRow}>
+          <Text style={styles.tableColHeader}>Product</Text>
+          <Text style={styles.tableColHeader}>Qty</Text>
+          <Text style={styles.tableColHeader}>Unit Price</Text>
+          <Text style={styles.tableColHeader}>Total Price</Text>
+        </View>
+        {slip.products.map((p, i) => (
+          <View style={styles.tableRow} key={i}>
+            <Text style={styles.tableCol}>{p.productName}</Text>
+            <Text style={styles.tableCol}>{p.quantity}</Text>
+            <Text style={styles.tableCol}>Rs {p.unitPrice?.toLocaleString()}</Text>
+            <Text style={styles.tableCol}>Rs {p.totalPrice?.toLocaleString()}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Totals */}
+      <View style={styles.totals}>
+        <Text>Subtotal: Rs {slip.subtotal?.toLocaleString()}</Text>
+        <Text>Tax: Rs {slip.tax?.toLocaleString()}</Text>
+        <Text>Discount: Rs {slip.discount?.toLocaleString()}</Text>
+        <Text style={styles.totalAmount}>Total: Rs {slip.totalAmount?.toLocaleString()}</Text>
+      </View>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text>Thank you for your purchase!</Text>
+        <Text>Muhammad saad ullah khan 03146074093</Text>
+      </View>
+    </Page>
+  </Document>
+);
+
+function SlipPage() {
+  const { slipId } = useParams();
+  const navigate = useNavigate();
+  const [slip, setSlip] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [generatingPDF, setGeneratingPDF] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    // Fetch actual slip details from your API
+    const fetchSlip = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        
+        // Replace with your actual API endpoint
+        const response = await fetch(`/api/slips/${slipId}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch slip data');
+        }
+        
+        const data = await response.json();
+        setSlip(data);
+        
+      } catch (error) {
+        console.error('Error fetching slip:', error);
+        setError('Failed to load slip data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (slipId) {
+      fetchSlip();
+    }
+  }, [slipId]);
+
+  // Download PDF function
+  const downloadPDF = async () => {
+    if (!slip) return;
+    
+    setGeneratingPDF(true);
+    try {
+      const blob = await pdf(<SlipPDFDocument slip={slip} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `slip-${slip.slipNumber || slip._id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Error generating PDF. Please try again.');
+    } finally {
+      setGeneratingPDF(false);
+    }
+  };
+
+  // Print function
+  const handlePrint = () => {
+    if (!slip) return;
+
+    const printWindow = window.open('', '_blank');
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Slip ${slip.slipNumber || slip._id}</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 20px; 
+              color: #000;
+            }
+            .header { 
+              text-align: center; 
+              margin-bottom: 20px;
+              border-bottom: 2px solid #000;
+              padding-bottom: 10px;
+            }
+            .company-name { 
+              font-size: 24px; 
+              font-weight: bold; 
+              margin-bottom: 5px;
+            }
+            .slip-title {
+              font-size: 20px;
+              font-weight: bold;
+              margin: 10px 0;
+            }
+            .customer-info {
+              margin-bottom: 20px;
+              padding: 10px;
+              background-color: #f5f5f5;
+              border-radius: 5px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+            }
+            th, td {
+              border: 1px solid #000;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #eee;
+              font-weight: bold;
+            }
+            .totals {
+              text-align: right;
+              margin-top: 20px;
+              border-top: 2px solid #000;
+              padding-top: 10px;
+            }
+            .total-amount {
+              font-size: 18px;
+              font-weight: bold;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 30px;
+              border-top: 1px solid #000;
+              padding-top: 10px;
+            }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">Saeed Auto</div>
+            <div>Contact: +92 300 1234567</div>
+            <div class="slip-title">SALES SLIP</div>
+          </div>
+          
+          <div class="customer-info">
+            <div><strong>Slip #:</strong> ${slip.slipNumber || slip._id}</div>
+            <div><strong>Date:</strong> ${new Date(slip.date).toLocaleString()}</div>
+            <div><strong>Customer:</strong> ${slip.customerName}</div>
+            <div><strong>Phone:</strong> ${slip.customerPhone}</div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Total Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${slip.products.map(product => `
+                <tr>
+                  <td>${product.productName}</td>
+                  <td>${product.quantity}</td>
+                  <td>Rs ${product.unitPrice?.toLocaleString()}</td>
+                  <td>Rs ${product.totalPrice?.toLocaleString()}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="totals">
+            <div><strong>Subtotal:</strong> Rs ${slip.subtotal?.toLocaleString()}</div>
+            <div><strong>Tax:</strong> Rs ${slip.tax?.toLocaleString()}</div>
+            <div><strong>Discount:</strong> Rs ${slip.discount?.toLocaleString()}</div>
+            <div class="total-amount"><strong>Total:</strong> Rs ${slip.totalAmount?.toLocaleString()}</div>
+          </div>
+          
+          <div class="footer">
+            <div>Thank you for your purchase!</div>
+            <div><strong>— Saeed Auto —</strong></div>
+          </div>
+          
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() {
+                window.close();
+              }, 100);
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+  };
+
+  if (loading) {
     return (
-      <Paper sx={{ p: 3, textAlign: 'center' }}>
-        <Typography color="error">No slip data available</Typography>
-      </Paper>
+      <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography sx={{ ml: 2 }}>Loading slip data...</Typography>
+      </Container>
     );
   }
 
-  const {
-    slipNumber = 'N/A',
-    customerName = 'Walk-in Customer',
-    customerPhone = '',
-    customerEmail = '',
-    products = [],
-    items = [], // Support both products and items
-    subtotal = 0,
-    tax = 0,
-    discount = 0,
-    totalAmount = 0,
-    paymentMethod = 'Cash',
-    notes = '',
-    date = new Date(),
-    createdAt = new Date(),
-    status = 'Paid'
-  } = slip;
+  if (error) {
+    return (
+      <Container sx={{ mt: 4 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+        <Button startIcon={<ArrowBack />} onClick={() => navigate('/slips')}>
+          Back to Slips
+        </Button>
+      </Container>
+    );
+  }
 
-  // Use products or items array, whichever is available and valid
-  const safeProducts = Array.isArray(products) && products.length > 0 ? products : 
-                     Array.isArray(items) && items.length > 0 ? items : [];
-
-  // Calculate actual total from products if available
-  const calculatedTotal = safeProducts.reduce((sum, product) => 
-    sum + (product.totalPrice || product.total || 0), 0
-  );
+  if (!slip) {
+    return (
+      <Container sx={{ mt: 4 }}>
+        <Alert severity="warning">Slip not found</Alert>
+        <Button startIcon={<ArrowBack />} onClick={() => navigate('/slips')} sx={{ mt: 2 }}>
+          Back to Slips
+        </Button>
+      </Container>
+    );
+  }
 
   return (
-    <Paper elevation={2} sx={{ p: 3, mb: 2 }}>
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-        <Box>
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
-            INVOICE
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Slip #: {slipNumber}
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Date: {new Date(date || createdAt).toLocaleDateString()}
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Time: {new Date(date || createdAt).toLocaleTimeString()}
-          </Typography>
+    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+        <Button 
+          startIcon={<ArrowBack />} 
+          onClick={() => navigate('/slips')}
+        >
+          Back to Slips
+        </Button>
+        
+        <Stack direction="row" spacing={2}>
+          <Button 
+            variant="outlined" 
+            startIcon={<Print />}
+            onClick={handlePrint}
+          >
+            Print
+          </Button>
+          <Button 
+            variant="contained" 
+            startIcon={<Download />}
+            onClick={downloadPDF}
+            disabled={generatingPDF}
+          >
+            {generatingPDF ? 'Generating...' : 'Download PDF'}
+          </Button>
+        </Stack>
+      </Stack>
+      
+      <Paper elevation={3} sx={{ p: 3 }} id="slip-content">
+        <Typography variant="h4" gutterBottom align="center">
+          Slip Details
+        </Typography>
+        
+        <Box sx={{ mb: 3 }}>
+          <Typography><strong>Slip #:</strong> {slip.slipNumber || slip._id}</Typography>
+          <Typography><strong>Date:</strong> {new Date(slip.date).toLocaleString()}</Typography>
+          <Typography><strong>Customer:</strong> {slip.customerName}</Typography>
+          <Typography><strong>Phone:</strong> {slip.customerPhone}</Typography>
         </Box>
-        <Chip 
-          label={status} 
-          color={status === 'Paid' ? 'success' : status === 'Pending' ? 'warning' : 'error'}
-          variant="outlined"
-        />
-      </Box>
 
-      <Divider sx={{ my: 2 }} />
-
-      {/* Customer Info */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h6" gutterBottom>Customer Information</Typography>
-        <Typography><strong>Name:</strong> {customerName}</Typography>
-        {customerPhone && <Typography><strong>Phone:</strong> {customerPhone}</Typography>}
-        {customerEmail && <Typography><strong>Email:</strong> {customerEmail}</Typography>}
-        <Typography><strong>Payment Method:</strong> {paymentMethod}</Typography>
-      </Box>
-
-      {/* Products Table */}
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell><strong>Product</strong></TableCell>
-              <TableCell align="right"><strong>Qty</strong></TableCell>
-              <TableCell align="right"><strong>Unit Price</strong></TableCell>
-              <TableCell align="right"><strong>Total</strong></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {safeProducts.length > 0 ? (
-              safeProducts.map((product, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    {product.productName || product.itemName || product.name || 'Unknown Product'}
-                  </TableCell>
-                  <TableCell align="right">{product.quantity || 0}</TableCell>
-                  <TableCell align="right">
-                    ₹{product.unitPrice?.toFixed(2) || product.price?.toFixed(2) || '0.00'}
-                  </TableCell>
-                  <TableCell align="right">
-                    ₹{product.totalPrice?.toFixed(2) || product.total?.toFixed(2) || '0.00'}
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                  <Typography variant="body2" color="textSecondary">
-                    No products found in this slip
-                  </Typography>
-                </TableCell>
+                <TableCell><strong>Product</strong></TableCell>
+                <TableCell><strong>Qty</strong></TableCell>
+                <TableCell><strong>Unit Price</strong></TableCell>
+                <TableCell><strong>Total Price</strong></TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {slip.products.map((product, index) => (
+                <TableRow key={index}>
+                  <TableCell>{product.productName}</TableCell>
+                  <TableCell>{product.quantity}</TableCell>
+                  <TableCell>Rs {product.unitPrice?.toLocaleString()}</TableCell>
+                  <TableCell>Rs {product.totalPrice?.toLocaleString()}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-      {/* Totals */}
-      <Box sx={{ mt: 3, textAlign: 'right' }}>
-        <Typography variant="body1">
-          <strong>Subtotal:</strong> ₹{subtotal?.toFixed(2) || calculatedTotal.toFixed(2)}
-        </Typography>
-        {discount > 0 && (
-          <Typography variant="body1">
-            <strong>Discount:</strong> ₹{discount?.toFixed(2) || '0.00'}
-          </Typography>
-        )}
-        {tax > 0 && (
-          <Typography variant="body1">
-            <strong>Tax:</strong> ₹{tax?.toFixed(2) || '0.00'}
-          </Typography>
-        )}
-        <Divider sx={{ my: 1 }} />
-        <Typography variant="h6">
-          <strong>Total Amount: ₹{totalAmount?.toFixed(2) || (calculatedTotal - discount + tax).toFixed(2)}</strong>
-        </Typography>
-      </Box>
-
-      {/* Debug Info - Remove in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <Box sx={{ mt: 2, p: 1, bgcolor: 'grey.100', borderRadius: 1 }}>
-          <Typography variant="caption" color="textSecondary">
-            <strong>Debug Info:</strong> Products: {safeProducts.length} | 
-            Slip ID: {slip._id || 'N/A'} | 
-            Has products: {!!slip.products} | 
-            Has items: {!!slip.items}
-          </Typography>
+        <Box sx={{ mt: 2, textAlign: 'right' }}>
+          <Typography><strong>Subtotal:</strong> Rs {slip.subtotal?.toLocaleString()}</Typography>
+          <Typography><strong>Tax:</strong> Rs {slip.tax?.toLocaleString()}</Typography>
+          <Typography><strong>Discount:</strong> Rs {slip.discount?.toLocaleString()}</Typography>
+          <Typography variant="h6"><strong>Total: Rs {slip.totalAmount?.toLocaleString()}</strong></Typography>
         </Box>
-      )}
-
-      {/* Notes */}
-      {notes && (
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="subtitle2"><strong>Notes:</strong></Typography>
-          <Typography variant="body2" color="textSecondary">
-            {notes}
-          </Typography>
-        </Box>
-      )}
-    </Paper>
+      </Paper>
+    </Container>
   );
-};
+}
 
-export default SlipInvoice;
+export default SlipPage;

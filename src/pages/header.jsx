@@ -1,15 +1,31 @@
 import * as React from 'react';
-import { Tabs, Tab, Box, Paper } from '@mui/material';
+import { Tabs, Tab, Paper } from '@mui/material';
 import { Link, useLocation } from 'react-router-dom';
 import saeedLogo from '../assets/ChatGPT Image Aug 6, 2025, 02_36_45 AM.png';
 
 function Header() {
   const location = useLocation();
-  const [value, setValue] = React.useState(location.pathname);
+  
+  // Function to determine the active tab value
+  const getActiveTabValue = () => {
+    const path = location.pathname;
+    
+    // If path starts with /slips/ (individual slip pages), highlight "View Slips" tab
+    if (path.startsWith('/slips/')) {
+      return '/slippage';
+    }
+    
+    // For exact matches
+    const validPaths = ['/inventory', '/additems', '/income', '/slips', '/slippage'];
+    if (validPaths.includes(path)) {
+      return path;
+    }
+    
+    // Default to inventory if no match
+    return false; // Return false instead of a path to avoid MUI warning
+  };
 
-  React.useEffect(() => {
-    setValue(location.pathname);
-  }, [location.pathname]);
+  const value = getActiveTabValue();
 
   return (
     <Paper 
@@ -30,10 +46,8 @@ function Header() {
       }}
     >
       <div className="header-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}> 
-
         <Tabs
           value={value}
-          onChange={(event, newValue) => setValue(newValue)}
           textColor="primary"
           indicatorColor="primary"
           variant="scrollable"
@@ -48,6 +62,7 @@ function Header() {
               borderRadius: 2,
               mx: 1,
               textTransform: 'none',
+              minHeight: '48px',
             },
             '& .Mui-selected': {
               backgroundColor: 'primary.main',
@@ -55,15 +70,45 @@ function Header() {
             },
           }}
         >
-          <Tab label="Inventory" value="/inventory" component={Link} to="/inventory" />
-          <Tab label="Add Items" value="/additems" component={Link} to="/additems" />
-          <Tab label="Income" value="/income" component={Link} to="/income" />
-          <Tab label="Create Slip" value="/slips" component={Link} to="/slips" />
-          <Tab label="View Slips" value="/slippage" component={Link} to="/slippage" />
+          <Tab 
+            label="Inventory" 
+            value="/inventory" 
+            component={Link} 
+            to="/inventory" 
+          />
+          <Tab 
+            label="Add Items" 
+            value="/additems" 
+            component={Link} 
+            to="/additems" 
+          />
+          <Tab 
+            label="Income" 
+            value="/income" 
+            component={Link} 
+            to="/income" 
+          />
+          <Tab 
+            label="Create Slip" 
+            value="/slips" 
+            component={Link} 
+            to="/slips" 
+          />
+          <Tab 
+            label="View Slips" 
+            value="/slippage" 
+            component={Link} 
+            to="/slippage" 
+          />
+           <Tab 
+            label="Search Slips" 
+            value="/search-slips" 
+            component={Link} 
+            to="/search-slips" 
+          />
         </Tabs>
 
-        <img src={saeedLogo} alt="Saeed Autos and Bike" style={{ width: 70 , marginRight: 2 }} />
-
+        <img src={saeedLogo} alt="Saeed Autos and Bike" style={{ width: 70, marginRight: 2 }} />
       </div>
     </Paper>
   );
