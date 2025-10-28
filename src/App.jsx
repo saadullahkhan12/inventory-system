@@ -7,10 +7,8 @@ import Header from './pages/header';
 import DashboardLayoutBasic from './pages/DashboardLayoutBasic';
 import Slips from './pages/slips';
 import Income from './pages/icome';
-import SlipPage from './pages/slipPage.jsx'; // Remove .jsx extension
 import SearchSlip from './pages/searchSlip';
-
-
+import ViewSlips from './pages/viewslips'; // Correct import name
 
 function App() {
   return (
@@ -21,12 +19,12 @@ function App() {
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/additems" element={<AddItems />} />
           <Route path="/income" element={<Income />} />
-          <Route path="/slips/:slipId" element={<SlipPage />} /> {/* This MUST come before /slips */}
+          <Route path="/slips/:slipId" element={<ViewSlips />} /> {/* Use ViewSlips for individual slip pages */}
           <Route path="/slips" element={<Slips />} />
-          <Route path="/slippage" element={<SlipPage />} />
+          <Route path="/slippage" element={<ViewSlips />} /> {/* Use ViewSlips for slip list page */}
           <Route path="/pagecontent" element={<DashboardLayoutBasic />} />
+          <Route path="/search-slips" element={<SearchSlip />} />
           <Route path="/" element={<Navigate to="/inventory" replace />} />
-          <Route path="/search-slips" element={<SearchSlip/>} />
         </Routes>
       </Router>
     </>
