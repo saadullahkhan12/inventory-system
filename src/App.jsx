@@ -7,7 +7,7 @@ import Header from './pages/header';
 import DashboardLayoutBasic from './pages/DashboardLayoutBasic';
 import Slips from './pages/slips';
 import Income from './pages/icome';
-import SlipPage from './pages/slipPage'; // Make sure this import exists
+import SlipPage from './pages/slipPage.jsx'; // Remove .jsx extension
 import SearchSlip from './pages/searchSlip';
 
 
