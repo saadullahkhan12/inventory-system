@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://inventory-system-back-end.onrender.com/api';
 
 export const axiosApi = axios.create({
   baseURL: API_BASE_URL,
