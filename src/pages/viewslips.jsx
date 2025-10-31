@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { ArrowBack, Download, Print } from '@mui/icons-material';
 import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { axiosApi } from '../utils/api'; // ✅ Import your axiosApi
 
 // PDF Styles
 const styles = StyleSheet.create({
@@ -151,25 +152,21 @@ function SlipPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Fetch actual slip details from your API
+    // Fetch actual slip details using axiosApi
     const fetchSlip = async () => {
       try {
         setLoading(true);
         setError('');
         
-        // Replace with your actual API endpoint
-        const response = await fetch(`/api/slips/${slipId}`);
+        // ✅ FIXED: Use axiosApi instead of direct fetch
+        const response = await axiosApi.slips.getById(slipId);
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch slip data');
-        }
-        
-        const data = await response.json();
-        setSlip(data);
+        setSlip(response.data);
         
       } catch (error) {
         console.error('Error fetching slip:', error);
-        setError('Failed to load slip data. Please try again.');
+        console.error('Error details:', error.response?.data);
+        setError(`Failed to load slip data: ${error.response?.data?.error || error.message}`);
       } finally {
         setLoading(false);
       }
@@ -411,6 +408,8 @@ function SlipPage() {
           <Typography><strong>Date:</strong> {new Date(slip.date).toLocaleString()}</Typography>
           <Typography><strong>Customer:</strong> {slip.customerName}</Typography>
           <Typography><strong>Phone:</strong> {slip.customerPhone}</Typography>
+          <Typography><strong>Payment Method:</strong> {slip.paymentMethod}</Typography>
+          {slip.status && <Typography><strong>Status:</strong> {slip.status}</Typography>}
         </Box>
 
         <TableContainer component={Paper}>
@@ -442,6 +441,14 @@ function SlipPage() {
           <Typography><strong>Discount:</strong> Rs {slip.discount?.toLocaleString()}</Typography>
           <Typography variant="h6"><strong>Total: Rs {slip.totalAmount?.toLocaleString()}</strong></Typography>
         </Box>
+
+        {slip.notes && (
+          <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+            <Typography variant="body2">
+              <strong>Notes:</strong> {slip.notes}
+            </Typography>
+          </Box>
+        )}
       </Paper>
     </Container>
   );
