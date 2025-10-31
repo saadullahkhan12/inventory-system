@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:5000",
+        target: "https://inventory-system-back-end.onrender.com/",
         changeOrigin: true,
       },
     },

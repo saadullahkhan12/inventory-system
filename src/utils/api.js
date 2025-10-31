@@ -5,27 +5,48 @@ const API_BASE_URL = 'https://inventory-system-back-end.onrender.com/api';
 export const axiosApi = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 10000,
+  timeout: 15000, // Increased timeout for production
 });
 
-// Request interceptor for logging
+// Enhanced request interceptor for debugging
 axiosApi.interceptors.request.use(
   (config) => {
-    console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`);
+    console.log('🔗 API CALL DEBUG:');
+    console.log('📍 Full URL:', config.baseURL + config.url);
+    console.log('🏠 Base URL:', config.baseURL);
+    console.log('📝 Endpoint:', config.url);
+    console.log('🔄 Method:', config.method?.toUpperCase());
+    console.log('---');
     return config;
   },
   (error) => {
+    console.error('❌ Request setup error:', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor for error handling
+// Enhanced response interceptor
 axiosApi.interceptors.response.use(
   (response) => {
+    console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url} - Success`);
     return response;
   },
   (error) => {
-    console.error('❌ API Error:', error.response?.data || error.message);
+    console.error('❌ API Error Details:');
+    console.error('URL:', error.config?.baseURL + error.config?.url);
+    console.error('Method:', error.config?.method?.toUpperCase());
+    console.error('Status:', error.response?.status);
+    console.error('Data:', error.response?.data);
+    console.error('Message:', error.message);
+    
+    // Handle specific error cases
+    if (error.code === 'ECONNABORTED') {
+      console.error('⏰ Request timeout');
+    }
+    if (error.message === 'Network Error') {
+      console.error('🌐 Network error - check CORS or server availability');
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -54,7 +75,7 @@ axiosApi.slips = {
   delete: (id) => axiosApi.delete(`/slips/${id}`),
 };
 
-// Income API - FIXED: Added all income endpoints
+// Income API
 axiosApi.income = {
   getAll: (params = {}) => axiosApi.get('/income', { params }),
   getById: (id) => axiosApi.get(`/income/${id}`),
@@ -62,7 +83,7 @@ axiosApi.income = {
   update: (id, data) => axiosApi.put(`/income/${id}`, data),
   delete: (id) => axiosApi.delete(`/income/${id}`),
   getSummary: () => axiosApi.get('/income/summary/overview'),
-  getToday: () => axiosApi.get('/income/today'), // Fixed: Changed from getDaily to getToday
+  getToday: () => axiosApi.get('/income/today'),
   getWeekly: () => axiosApi.get('/income/weekly'),
   getMonthly: () => axiosApi.get('/income/monthly'),
   getTopProducts: (params = {}) => axiosApi.get('/income/top-products', { params }),
@@ -72,6 +93,23 @@ axiosApi.income = {
 axiosApi.analytics = {
   getDashboard: () => axiosApi.get('/analytics/dashboard'),
   getSalesTrends: (params = {}) => axiosApi.get('/analytics/sales-trends', { params }),
+};
+
+// Health check function
+export const checkBackendHealth = async () => {
+  try {
+    console.log('🏥 Checking backend health...');
+    const response = await axiosApi.get('/test');
+    console.log('✅ Backend is healthy:', response.data);
+    return { healthy: true, data: response.data };
+  } catch (error) {
+    console.error('❌ Backend health check failed:', error.message);
+    return { 
+      healthy: false, 
+      error: error.message,
+      details: error.response?.data 
+    };
+  }
 };
 
 // Test all endpoints quickly
@@ -84,23 +122,30 @@ export const testAllEndpoints = async () => {
     { name: 'Analytics', fn: axiosApi.analytics.getDashboard },
   ];
 
+  console.log('🧪 Testing all endpoints...');
   const results = [];
+  
   for (const test of tests) {
     try {
       const res = await test.fn();
+      console.log(`✅ ${test.name}: OK`);
       results.push({
         name: test.name,
         status: '✅ OK',
         data: res.data,
       });
     } catch (err) {
+      console.error(`❌ ${test.name}: Failed -`, err.message);
       results.push({ 
         name: test.name, 
         status: '❌ Failed', 
-        error: err.response?.data?.error || err.message 
+        error: err.response?.data?.error || err.message,
+        url: err.config?.baseURL + err.config?.url
       });
     }
   }
+  
+  console.log('📊 Test results:', results);
   return results;
 };
 

@@ -31,7 +31,7 @@ const AddItems = () => {
       try {
         // First, try a simple ping to the server
         console.log('Testing server connection...');
-        const pingResponse = await fetch('http://localhost:5000');
+        const pingResponse = await fetch('https://inventory-system-back-end.onrender.com');
         console.log('Ping response:', pingResponse.status);
         
         // Then try the API endpoint
@@ -107,7 +107,7 @@ const AddItems = () => {
       };
 
       console.log('Sending item data:', itemData);
-      console.log('API endpoint:', 'http://localhost:5000/api/items');
+      console.log('API endpoint:', 'https://inventory-system-back-end.onrender.com/api/items');
       
       const response = await axiosApi.items.create(itemData);
       
@@ -136,7 +136,7 @@ const AddItems = () => {
       let errorMessage = 'Failed to add item. Please try again.';
       
       if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
-        errorMessage = 'Cannot connect to server. Please make sure your backend server is running on http://localhost:5000';
+        errorMessage = 'Cannot connect to server. Please make sure your backend server is running on https://inventory-system-back-end.onrender.com/';
       } else if (error.response) {
         errorMessage = `Server error: ${error.response.status} - ${error.response.data?.message || error.response.statusText}`;
       } else if (error.message) {
@@ -182,13 +182,13 @@ const AddItems = () => {
               console.log('=== MANUAL SERVER TEST ===');
               try {
                 // Test 1: Basic server ping
-                console.log('Test 1: Pinging http://localhost:5000');
-                const pingResponse = await fetch('http://localhost:5000');
+                console.log('Test 1: Pinging https://inventory-system-back-end.onrender.com/');
+                const pingResponse = await fetch('https://inventory-system-back-end.onrender.com');
                 console.log('✅ Server responds:', pingResponse.status);
                 
                 // Test 2: API endpoint
                 console.log('Test 2: Testing /api/items endpoint');
-                const apiResponse = await fetch('http://localhost:5000/api/items');
+                const apiResponse = await fetch('https://inventory-system-back-end.onrender.com/api/items');
                 console.log('✅ API responds:', apiResponse.status);
                 const data = await apiResponse.text();
                 console.log('✅ API data:', data);
