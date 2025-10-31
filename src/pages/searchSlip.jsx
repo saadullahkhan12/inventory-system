@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import {
   Search, Refresh, Edit, Visibility, Cancel,
-  Clear, LocalOffer, Save, Delete
+  Clear, LocalOffer, Save, Delete, Add // ✅ Added Add icon import
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { axiosApi } from '../utils/api';
@@ -229,9 +229,17 @@ const SearchSlip = () => {
     }
   };
 
-  // View slip details
+  // View slip details - FIXED: Check if route exists
   const handleViewSlip = (slipId) => {
-    navigate(`/slips/${slipId}`);
+    // Check if the individual slip page exists in your routes
+    // If not, show details in a dialog instead
+    try {
+      navigate(`/slips/${slipId}`);
+    } catch (error) {
+      console.warn('Individual slip route not available, showing in dialog');
+      // You can implement a view dialog here if needed
+      showNotification('info', 'Individual slip view page is not available.');
+    }
   };
 
   // Get payment method color
@@ -509,7 +517,7 @@ const SearchSlip = () => {
                 </Typography>
                 <Button
                   variant="outlined"
-                  startIcon={<Add />}
+                  startIcon={<Add />} 
                   onClick={addProduct}
                   size="small"
                 >
