@@ -150,66 +150,16 @@ const AddItems = () => {
   };
 
   return (
-    <Box sx={{ marginTop: '60px', padding: 3, maxWidth: '800px', mx: 'auto' }}>
+    <Box sx={{ marginTop: '60px', padding: 3, maxWidth: '1400px', mx: 'auto' }}>
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom align="center" color="primary">
           Add New Item to Inventory
         </Typography>
         
-        {/* Server Status Indicator */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2, flexDirection: 'column', alignItems: 'center' }}>
-          {serverStatus === 'checking' && (
-            <Alert severity="info" sx={{ width: 'fit-content', mb: 1 }}>
-              Checking server connection...
-            </Alert>
-          )}
-          {serverStatus === 'online' && (
-            <Alert severity="success" sx={{ width: 'fit-content', mb: 1 }}>
-              ✅ Server connected - Ready to add items
-            </Alert>
-          )}
-          {serverStatus === 'offline' && (
-            <Alert severity="error" sx={{ width: 'fit-content', mb: 1 }}>
-              ❌ Server offline - Please check console for details
-            </Alert>
-          )}
+       
           
-          {/* Manual Test Button */}
-          <Button 
-            variant="outlined" 
-            size="small" 
-            onClick={async () => {
-              console.log('=== MANUAL SERVER TEST ===');
-              try {
-                // Test 1: Basic server ping
-                console.log('Test 1: Pinging https://inventory-system-back-end.onrender.com/');
-                const pingResponse = await fetch('https://inventory-system-back-end.onrender.com');
-                console.log('✅ Server responds:', pingResponse.status);
-                
-                // Test 2: API endpoint
-                console.log('Test 2: Testing /api/items endpoint');
-                const apiResponse = await fetch('https://inventory-system-back-end.onrender.com/api/items');
-                console.log('✅ API responds:', apiResponse.status);
-                const data = await apiResponse.text();
-                console.log('✅ API data:', data);
-                
-                // Test 3: Axios API
-                console.log('Test 3: Testing axios API');
-                const axiosResponse = await axiosApi.items.getAll();
-                console.log('✅ Axios API works:', axiosResponse.data);
-                
-                setServerStatus('online');
-                showNotification('success', 'All tests passed! Server is working correctly.');
-              } catch (error) {
-                console.error('❌ Test failed:', error);
-                showNotification('error', `Test failed: ${error.message}`);
-              }
-            }}
-            sx={{ mt: 1 }}
-          >
-            🔧 Test Server Connection
-          </Button>
-        </Box>
+          
+       
         
         <Typography variant="subtitle1" align="center" color="text.secondary" sx={{ mb: 4 }}>
           Fill in the details below to add a new item to your inventory
@@ -285,31 +235,7 @@ const AddItems = () => {
               />
             </Grid>
 
-            {/* Supplier */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Supplier"
-                name="supplier"
-                value={formData.supplier}
-                onChange={handleInputChange}
-                placeholder="e.g., Honda Parts Ltd"
-              />
-            </Grid>
-
-            {/* Description */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                multiline
-                rows={3}
-                placeholder="Additional details about the product..."
-              />
-            </Grid>
+           
 
             {/* Submit Button */}
             <Grid item xs={12}>
@@ -329,20 +255,7 @@ const AddItems = () => {
           </Grid>
         </form>
 
-        {/* Quick Tips Card */}
-        <Card sx={{ mt: 4, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              💡 Quick Tips:
-            </Typography>
-            <Typography variant="body2" component="div">
-              • Use clear, descriptive product names<br/>
-              • Group similar items under the same category<br/>
-              • SKU codes help with inventory tracking<br/>
-              • Keep supplier information for reordering
-            </Typography>
-          </CardContent>
-        </Card>
+        
       </Paper>
 
       {/* Notification Snackbar */}

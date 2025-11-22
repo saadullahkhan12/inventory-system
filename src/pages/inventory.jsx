@@ -1,37 +1,18 @@
-import * as React from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useEffect } from 'react';
 import {
-  Box, Tabs, Tab, Typography, Paper,
-  Table, TableBody, TableCell, tableCellClasses,
-  TableContainer, TableHead, TableRow, CircularProgress, Alert
+  Box, Paper, Typography, Grid, Card, CardContent,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Tabs, Tab, Chip, CircularProgress, Alert, Stack,
+  TextField, IconButton, Tooltip
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import {
+  TrendingUp, CalendarToday, DateRange, FilterList,
+  Refresh, Search, Clear
+} from '@mui/icons-material';
 import { axiosApi } from '../utils/api';
 
-// Styled table cells & rows
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.common.white,
-    fontWeight: 'bold'
-  },
-  [`&.${tableCellClasses.body}`]: {
-    fontSize: 14,
-  },
-}));
-
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:nth-of-type(odd)': {
-    backgroundColor: theme.palette.action.hover,
-  },
-  '&:last-child td, &:last-child th': {
-    border: 0,
-  },
-}));
-
-// Tab panel component
-function CustomTabPanel(props) {
-  const { children, value, index, ...other } = props;
+// Tab Panel Component
+function TabPanel({ children, value, index, ...other }) {
   return (
     <div
       role="tabpanel"
@@ -40,209 +21,433 @@ function CustomTabPanel(props) {
       aria-labelledby={`income-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 2 }}>{children}</Box>}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
-CustomTabPanel.propTypes = {
-  children: PropTypes.node, value: PropTypes.number.isRequired, index: PropTypes.number.isRequired,
-};
 
-function a11yProps(index) {
-  return {
-    id: `income-tab-${index}`,
-    'aria-controls': `income-tabpanel-${index}`,
-  };
-}
-
-export default function Inventory() {
-  const [value, setValue] = React.useState(0);
-  const [daily, setDaily] = React.useState([]);
-  const [weekly, setWeekly] = React.useState([]);
-  const [monthly, setMonthly] = React.useState([]);
-  const [loading, setLoading] = React.useState({
+export default function Income() {
+  const [tabValue, setTabValue] = useState(0);
+  const [data, setData] = useState({
+    daily: [],
+    weekly: [],
+    monthly: []
+  });
+  const [loading, setLoading] = useState({
     daily: true,
     weekly: true,
     monthly: true
   });
-  const [error, setError] = React.useState(null);
+  const [error, setError] = useState(null);
+  const [productFilter, setProductFilter] = useState('');
 
-  React.useEffect(() => {
-    // Fetch daily income data
-    axiosApi.income.getToday()
-      .then(res => {
-        console.log('📊 Daily income response:', res.data);
-        // Handle different response formats
-        const dailyData = res.data?.records || res.data || [];
-        setDaily(Array.isArray(dailyData) ? dailyData : []);
-        setLoading(prev => ({ ...prev, daily: false }));
-      })
-      .catch(err => {
-        console.error('Error fetching daily income:', err);
-        setError('Failed to load daily income data');
-        setLoading(prev => ({ ...prev, daily: false }));
-      });
-    
-    // Fetch weekly income data
-    axiosApi.income.getWeekly()
-      .then(res => {
-        console.log('📊 Weekly income response:', res.data);
-        const weeklyData = res.data?.records || res.data || [];
-        setWeekly(Array.isArray(weeklyData) ? weeklyData : []);
-        setLoading(prev => ({ ...prev, weekly: false }));
-      })
-      .catch(err => {
-        console.error('Error fetching weekly income:', err);
-        setError('Failed to load weekly income data');
-        setLoading(prev => ({ ...prev, weekly: false }));
-      });
-    
-    // Fetch monthly income data
-    axiosApi.income.getMonthly()
-      .then(res => {
-        console.log('📊 Monthly income response:', res.data);
-        const monthlyData = res.data?.records || res.data || [];
-        setMonthly(Array.isArray(monthlyData) ? monthlyData : []);
-        setLoading(prev => ({ ...prev, monthly: false }));
-      })
-      .catch(err => {
-        console.error('Error fetching monthly income:', err);
-        setError('Failed to load monthly income data');
-        setLoading(prev => ({ ...prev, monthly: false }));
-      });
+  // Fetch data when component mounts
+  useEffect(() => {
+    fetchIncomeData();
   }, []);
 
-  // Safe data calculations with fallbacks
-  const getTotalIncome = (data) => {
-    if (!Array.isArray(data)) return 0;
-    return data.reduce((sum, d) => sum + (d.totalIncome || 0), 0);
+  const fetchIncomeData = async () => {
+    setError(null);
+    
+    try {
+      // Fetch all data in parallel
+      const [dailyRes, weeklyRes, monthlyRes] = await Promise.all([
+        axiosApi.income.getToday(),
+        axiosApi.income.getWeekly(),
+        axiosApi.income.getMonthly()
+      ]);
+
+      setData({
+        daily: Array.isArray(dailyRes.data) ? dailyRes.data : dailyRes.data?.records || [],
+        weekly: Array.isArray(weeklyRes.data) ? weeklyRes.data : weeklyRes.data?.records || [],
+        monthly: Array.isArray(monthlyRes.data) ? monthlyRes.data : monthlyRes.data?.records || []
+      });
+
+    } catch (err) {
+      console.error('Error fetching income data:', err);
+      setError('Failed to load income data. Please try again.');
+    } finally {
+      setLoading({ daily: false, weekly: false, monthly: false });
+    }
   };
 
-  const getTotalItems = (data) => {
-    if (!Array.isArray(data)) return 0;
-    return data.reduce((sum, d) => {
-      const products = d.productsSold || [];
-      return sum + products.reduce((pSum, p) => pSum + (p.quantity || 0), 0);
-    }, 0);
+  // Calculate statistics
+  const calculateStats = (incomeData) => {
+    if (!Array.isArray(incomeData)) return { totalIncome: 0, totalItems: 0, transactionCount: 0, averageSale: 0 };
+    
+    const totalIncome = incomeData.reduce((sum, entry) => sum + (entry.totalIncome || 0), 0);
+    const totalItems = incomeData.reduce((sum, entry) => 
+      sum + (entry.productsSold?.reduce((pSum, product) => pSum + (product.quantity || 0), 0) || 0), 0
+    );
+    const transactionCount = incomeData.length;
+    const averageSale = transactionCount > 0 ? totalIncome / transactionCount : 0;
+
+    return { totalIncome, totalItems, transactionCount, averageSale };
   };
 
-  const renderTable = (data, period) => {
-    // Check if still loading
-    if (loading.daily && period === 'daily' || 
-        loading.weekly && period === 'weekly' || 
-        loading.monthly && period === 'monthly') {
-      return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
-          <CircularProgress />
-          <Typography sx={{ ml: 2 }}>Loading {period} data...</Typography>
-        </Box>
-      );
-    }
+  // Filter data by product name
+  const getFilteredData = (incomeData) => {
+    if (!Array.isArray(incomeData)) return [];
+    
+    if (!productFilter.trim()) return incomeData;
 
-    // Check for error
-    if (error) {
-      return (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      );
-    }
-
-    // Check if data is empty
-    if (!Array.isArray(data) || data.length === 0) {
-      return (
-        <Box sx={{ textAlign: 'center', py: 4 }}>
-          <Typography variant="h6" color="textSecondary">
-            No {period} income records found
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Create some sales slips to see income data here.
-          </Typography>
-        </Box>
-      );
-    }
-
-    return (
-      <>
-        <Box sx={{ mb: 4, p: 2, bgcolor: 'primary.main', color: 'white', borderRadius: 1 }}>
-          <Typography variant="h6">{period.charAt(0).toUpperCase() + period.slice(1)} Summary</Typography>
-          <Typography variant="h5">Total Income: ₹{getTotalIncome(data).toFixed(2)}</Typography>
-          <Typography variant="subtitle1">Total Items Sold: {getTotalItems(data)}</Typography>
-          <Typography variant="body2">Total Transactions: {data.length}</Typography>
-        </Box>
-
-        {data.map((entry, i) => (
-          <Box key={i} sx={{ mb: 4 }}>
-            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>
-              Date: {new Date(entry.date || entry.createdAt).toLocaleDateString()}
-              {entry.customerName && ` | Customer: ${entry.customerName}`}
-              {entry.paymentMethod && ` | Payment: ${entry.paymentMethod}`}
-            </Typography>
-            <TableContainer component={Paper} elevation={2}>
-              <Table sx={{ minWidth: 600 }} aria-label="products sold table">
-                <TableHead>
-                  <TableRow>
-                    <StyledTableCell>Product Name</StyledTableCell>
-                    <StyledTableCell align="right">Quantity</StyledTableCell>
-                    <StyledTableCell align="right">Unit Price</StyledTableCell>
-                    <StyledTableCell align="right">Total Price</StyledTableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {(entry.productsSold || []).map((product, j) => (
-                    <StyledTableRow key={j}>
-                      <StyledTableCell>{product.productName || 'Unknown Product'}</StyledTableCell>
-                      <StyledTableCell align="right">{product.quantity || 0}</StyledTableCell>
-                      <StyledTableCell align="right">₹{product.unitPrice?.toFixed(2) || '0.00'}</StyledTableCell>
-                      <StyledTableCell align="right">₹{product.totalPrice?.toFixed(2) || '0.00'}</StyledTableCell>
-                    </StyledTableRow>
-                  ))}
-                  {/* Total row for this entry */}
-                  <StyledTableRow>
-                    <StyledTableCell colSpan={3} align="right" sx={{ fontWeight: 'bold' }}>
-                      Entry Total:
-                    </StyledTableCell>
-                    <StyledTableCell align="right" sx={{ fontWeight: 'bold' }}>
-                      ₹{entry.totalIncome?.toFixed(2) || '0.00'}
-                    </StyledTableCell>
-                  </StyledTableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
-        ))}
-      </>
+    const filterTerm = productFilter.toLowerCase().trim();
+    
+    return incomeData.filter(entry => 
+      entry.productsSold?.some(product => 
+        product.productName?.toLowerCase().includes(filterTerm)
+      )
     );
   };
 
-  const handleChange = (event, newValue) => setValue(newValue);
+  // Get current data based on active tab
+  const getCurrentData = () => {
+    switch (tabValue) {
+      case 0: return getFilteredData(data.daily);
+      case 1: return getFilteredData(data.weekly);
+      case 2: return getFilteredData(data.monthly);
+      default: return [];
+    }
+  };
+
+  const currentData = getCurrentData();
+  const stats = calculateStats(currentData);
+
+  // Handle tab change
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  // Clear product filter
+  const clearFilter = () => {
+    setProductFilter('');
+  };
+
+  // Get payment method color
+  const getPaymentMethodColor = (method) => {
+    const colors = {
+      'Cash': 'success',
+      'Card': 'primary',
+      'UPI': 'secondary',
+      'Bank Transfer': 'info',
+      'Credit': 'warning',
+      'Other': 'default'
+    };
+    return colors[method] || 'default';
+  };
+
+  // Loading component
+  const renderLoading = () => (
+    <Box className="flex justify-center items-center h-64">
+      <CircularProgress />
+      <Typography className="ml-4 text-gray-600">Loading income data...</Typography>
+    </Box>
+  );
+
+  // Error component
+  const renderError = () => (
+    <Alert 
+      severity="error" 
+      action={
+        <IconButton color="inherit" size="small" onClick={fetchIncomeData}>
+          <Refresh />
+        </IconButton>
+      }
+      className="mb-4"
+    >
+      {error}
+    </Alert>
+  );
+
+  // Empty state component
+  const renderEmptyState = () => (
+    <Box className="text-center py-12">
+      <TrendingUp className="text-4xl text-gray-400 mb-4 mx-auto" />
+      <Typography variant="h6" className="text-gray-600 mb-2">
+        {productFilter ? 'No matching products found' : 'No income data found'}
+      </Typography>
+      <Typography variant="body2" className="text-gray-500">
+        {productFilter ? 'Try a different product name' : 'Create some sales slips to see income reports here.'}
+      </Typography>
+      {productFilter && (
+        <Button 
+          variant="outlined" 
+          onClick={clearFilter}
+          className="mt-2"
+        >
+          Clear Filter
+        </Button>
+      )}
+    </Box>
+  );
+
+  // Statistics Cards
+  const renderStatsCards = () => (
+    <Grid container spacing={3} className="mb-6">
+      <Grid item xs={12} sm={6} md={3}>
+        <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg">
+          <CardContent className="p-4">
+            <Typography variant="h6" className="font-semibold mb-2">
+              Total Income
+            </Typography>
+            <Typography variant="h4" className="font-bold">
+              ₹{stats.totalIncome.toFixed(2)}
+            </Typography>
+            <Typography variant="body2" className="opacity-90">
+              {tabValue === 0 ? 'Today' : tabValue === 1 ? 'This Week' : 'This Month'}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid item xs={12} sm={6} md={3}>
+        <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg">
+          <CardContent className="p-4">
+            <Typography variant="h6" className="font-semibold mb-2">
+              Items Sold
+            </Typography>
+            <Typography variant="h4" className="font-bold">
+              {stats.totalItems}
+            </Typography>
+            <Typography variant="body2" className="opacity-90">
+              Total units sold
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid item xs={12} sm={6} md={3}>
+        <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg">
+          <CardContent className="p-4">
+            <Typography variant="h6" className="font-semibold mb-2">
+              Transactions
+            </Typography>
+            <Typography variant="h4" className="font-bold">
+              {stats.transactionCount}
+            </Typography>
+            <Typography variant="body2" className="opacity-90">
+              Total sales slips
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid item xs={12} sm={6} md={3}>
+        <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
+          <CardContent className="p-4">
+            <Typography variant="h6" className="font-semibold mb-2">
+              Average Sale
+            </Typography>
+            <Typography variant="h4" className="font-bold">
+              ₹{stats.averageSale.toFixed(2)}
+            </Typography>
+            <Typography variant="body2" className="opacity-90">
+              Per transaction
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  );
+
+  // Simple Product Filter
+  const renderProductFilter = () => (
+    <Paper className="p-4 mb-6 shadow-md">
+      <Box className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <Typography variant="h6" className="flex items-center gap-2">
+          <FilterList />
+          Filter by Product Name
+        </Typography>
+        
+        <Stack direction="row" spacing={2} alignItems="center">
+          {productFilter && (
+            <Chip 
+              label={`${currentData.length} records`}
+              color="primary"
+              variant="outlined"
+            />
+          )}
+          <Tooltip title="Refresh Data">
+            <IconButton onClick={fetchIncomeData} color="primary">
+              <Refresh />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      </Box>
+
+      <Box className="mt-4 flex gap-2">
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Search by product name..."
+          value={productFilter}
+          onChange={(e) => setProductFilter(e.target.value)}
+          InputProps={{
+            startAdornment: <Search className="text-gray-400 mr-2" />
+          }}
+        />
+        {productFilter && (
+          <IconButton onClick={clearFilter} color="secondary">
+            <Clear />
+          </IconButton>
+        )}
+      </Box>
+
+      {productFilter && (
+        <Typography variant="body2" className="text-gray-600 mt-2">
+          Showing transactions containing: <strong>"{productFilter}"</strong>
+        </Typography>
+      )}
+    </Paper>
+  );
+
+  // Income Table
+  const renderIncomeTable = () => (
+    <TableContainer component={Paper} className="shadow-lg">
+      <Table>
+        <TableHead className="bg-gray-50">
+          <TableRow>
+            <TableCell className="font-bold text-gray-700">Date & Time</TableCell>
+            <TableCell className="font-bold text-gray-700">Customer</TableCell>
+            <TableCell className="font-bold text-gray-700">Payment</TableCell>
+            <TableCell className="font-bold text-gray-700">Products</TableCell>
+            <TableCell className="font-bold text-gray-700 text-right">Amount</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {currentData.map((entry, index) => (
+            <TableRow 
+              key={index}
+              className="hover:bg-gray-50 transition-colors"
+            >
+              <TableCell>
+                <Typography variant="body2" className="font-medium">
+                  {new Date(entry.date || entry.createdAt).toLocaleDateString()}
+                </Typography>
+                <Typography variant="caption" className="text-gray-500">
+                  {new Date(entry.date || entry.createdAt).toLocaleTimeString()}
+                </Typography>
+              </TableCell>
+              
+              <TableCell>
+                <Typography variant="body2" className="font-medium">
+                  {entry.customerName || 'Walk-in Customer'}
+                </Typography>
+                {entry.customerPhone && (
+                  <Typography variant="caption" className="text-gray-500">
+                    {entry.customerPhone}
+                  </Typography>
+                )}
+              </TableCell>
+              
+              <TableCell>
+                <Chip
+                  label={entry.paymentMethod || 'Cash'}
+                  color={getPaymentMethodColor(entry.paymentMethod)}
+                  size="small"
+                />
+              </TableCell>
+              
+              <TableCell>
+                <Box className="max-w-xs">
+                  {entry.productsSold?.map((product, i) => (
+                    <Typography 
+                      key={i} 
+                      variant="body2" 
+                      className={
+                        product.productName?.toLowerCase().includes(productFilter.toLowerCase()) 
+                          ? 'font-bold text-blue-600' 
+                          : ''
+                      }
+                    >
+                      {product.productName} (x{product.quantity})
+                    </Typography>
+                  ))}
+                </Box>
+              </TableCell>
+              
+              <TableCell align="right">
+                <Typography variant="body1" className="font-bold text-green-600">
+                  ₹{entry.totalIncome?.toFixed(2)}
+                </Typography>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
 
   return (
-    <Box sx={{ marginTop: '60px', width: '100%', p: 3 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Income Reports
-      </Typography>
-      <Typography variant="subtitle1" color="textSecondary" sx={{ mb: 3 }}>
-        View daily, weekly, and monthly income reports
-      </Typography>
-
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={value} onChange={handleChange} aria-label="Income Tabs">
-          <Tab label="Daily Income" {...a11yProps(0)} />
-          <Tab label="Weekly Income" {...a11yProps(1)} />
-          <Tab label="Monthly Income" {...a11yProps(2)} />
-        </Tabs>
+    <Box className="min-h-screen bg-gray-50 p-4 md:p-6">
+      {/* Header */}
+      <Box className="mb-6">
+        <Typography variant="h4" className="font-bold text-gray-800 mb-2">
+          Income Reports
+        </Typography>
+        <Typography variant="subtitle1" className="text-gray-600">
+          Track and analyze your sales performance across different time periods
+        </Typography>
       </Box>
-      
-      <CustomTabPanel value={value} index={0}>
-        {renderTable(daily, 'daily')}
-      </CustomTabPanel>
-      <CustomTabPanel value={value} index={1}>
-        {renderTable(weekly, 'weekly')}
-      </CustomTabPanel>
-      <CustomTabPanel value={value} index={2}>
-        {renderTable(monthly, 'monthly')}
-      </CustomTabPanel>
+
+      {/* Tabs */}
+      <Paper className="mb-6 shadow-md">
+        <Tabs 
+          value={tabValue} 
+          onChange={handleTabChange}
+          variant="fullWidth"
+          className="border-b"
+        >
+          <Tab 
+            icon={<CalendarToday />} 
+            label="Daily" 
+            className="min-h-16"
+          />
+          <Tab 
+            icon={<DateRange />} 
+            label="Weekly" 
+            className="min-h-16"
+          />
+          <Tab 
+            icon={<TrendingUp />} 
+            label="Monthly" 
+            className="min-h-16"
+          />
+        </Tabs>
+
+        <TabPanel value={tabValue} index={0}>
+          {loading.daily ? renderLoading() : (
+            <>
+              {renderStatsCards()}
+              {renderProductFilter()}
+              {currentData.length > 0 ? renderIncomeTable() : renderEmptyState()}
+            </>
+          )}
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={1}>
+          {loading.weekly ? renderLoading() : (
+            <>
+              {renderStatsCards()}
+              {renderProductFilter()}
+              {currentData.length > 0 ? renderIncomeTable() : renderEmptyState()}
+            </>
+          )}
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={2}>
+          {loading.monthly ? renderLoading() : (
+            <>
+              {renderStatsCards()}
+              {renderProductFilter()}
+              {currentData.length > 0 ? renderIncomeTable() : renderEmptyState()}
+            </>
+          )}
+        </TabPanel>
+      </Paper>
+
+      {/* Error Display */}
+      {error && renderError()}
     </Box>
   );
 }

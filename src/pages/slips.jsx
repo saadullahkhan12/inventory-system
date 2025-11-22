@@ -14,9 +14,9 @@ const Slips = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    customerName: '',
-    customerPhone: '',
-    customerEmail: '',
+    customerName: 'user',
+    customerPhone: '00 000 000',
+    customerEmail: 'user@gmail.com',
     paymentMethod: 'Cash',
     discount: 0,
     tax: 0,

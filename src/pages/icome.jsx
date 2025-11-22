@@ -210,30 +210,6 @@ const Income = () => {
         </Card>
       )}
 
-      {/* Debug Tools */}
-      <Paper sx={{ p: 2, mb: 4, bgcolor: 'background.default' }}>
-        <Typography variant="h6" gutterBottom>API Debug Tools</Typography>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <Button 
-            variant="outlined" 
-            onClick={handleTestIncomeAPI}
-            disabled={loading.testing}
-            startIcon={loading.testing ? <CircularProgress size={16} /> : null}
-          >
-            {loading.testing ? 'Testing...' : '🧪 Test Income API'}
-          </Button>
-          <Chip 
-            label={`${products.length} Products Loaded`} 
-            color="primary" 
-            variant="outlined" 
-          />
-          <Chip 
-            label={`${incomes.length} Income Records`} 
-            color="secondary" 
-            variant="outlined" 
-          />
-        </Box>
-      </Paper>
 
       {/* Income Entry by Category */}
       <Typography variant="h5" sx={{ mb: 3 }}>Quick Income Entry</Typography>
