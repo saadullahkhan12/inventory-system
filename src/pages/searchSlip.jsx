@@ -167,37 +167,72 @@ const SearchSlip = () => {
     try {
       setLoading(true);
 
+      // Validate products
+      if (!editForm.products || editForm.products.length === 0) {
+        showNotification('error', 'At least one product is required');
+        return;
+      }
+
+      // Validate each product
+      for (const product of editForm.products) {
+        if (!product.productName || !product.productName.trim()) {
+          showNotification('error', 'All products must have a name');
+          return;
+        }
+        if (!product.quantity || product.quantity <= 0) {
+          showNotification('error', 'All products must have a valid quantity');
+          return;
+        }
+        if (!product.unitPrice || product.unitPrice < 0) {
+          showNotification('error', 'All products must have a valid price');
+          return;
+        }
+      }
+
       // Calculate new totals
-      const subtotal = editForm.products.reduce((sum, product) => sum + (product.totalPrice || 0), 0);
+      const subtotal = editForm.products.reduce((sum, product) => {
+        const total = (product.quantity || 0) * (product.unitPrice || 0);
+        return sum + total;
+      }, 0);
+      
       const tax = selectedSlip.tax || 0;
       const discount = selectedSlip.discount || 0;
       const totalAmount = subtotal - discount + tax;
 
       const updatedData = {
-        customerName: editForm.customerName,
-        customerPhone: editForm.customerPhone,
-        paymentMethod: editForm.paymentMethod,
-        notes: editForm.notes,
+        customerName: editForm.customerName || 'Walk-in Customer',
+        customerPhone: editForm.customerPhone || '',
+        paymentMethod: editForm.paymentMethod || 'Cash',
+        notes: editForm.notes || '',
         products: editForm.products.map(product => ({
-          productName: product.productName,
-          quantity: product.quantity,
-          unitPrice: product.unitPrice,
-          totalPrice: product.totalPrice
+          productName: product.productName.trim(),
+          quantity: parseInt(product.quantity),
+          unitPrice: parseFloat(product.unitPrice),
+          totalPrice: (parseInt(product.quantity) * parseFloat(product.unitPrice))
         })),
         subtotal: subtotal,
         totalAmount: totalAmount,
-        tax: selectedSlip.tax || 0,
-        discount: selectedSlip.discount || 0
+        tax: tax,
+        discount: discount,
+        status: selectedSlip.status || 'Paid'
       };
 
-      await axiosApi.slips.update(selectedSlip._id, updatedData);
-      showNotification('success', 'Slip updated successfully! Inventory will be adjusted.');
-      setOpenEditDialog(false);
-      await fetchAllSlips();
+      const response = await axiosApi.slips.update(selectedSlip._id, updatedData);
+      
+      if (response.data) {
+        showNotification('success', 'Slip updated successfully! Inventory has been adjusted.');
+        setOpenEditDialog(false);
+        setSelectedSlip(null);
+        await fetchAllSlips();
+      }
       
     } catch (error) {
       console.error('Update error:', error);
-      showNotification('error', `Failed to update slip: ${error.response?.data?.error || error.message}`);
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.details || 
+                          error.message || 
+                          'Failed to update slip';
+      showNotification('error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -271,17 +306,37 @@ const SearchSlip = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', mt: 2, p: 2 }}>
+    <Box sx={{ 
+      maxWidth: 1400, 
+      mx: 'auto', 
+      mt: { xs: 1, sm: 2 }, 
+      p: { xs: 1.5, sm: 2, md: 3 },
+      minHeight: '100vh',
+      background: 'linear-gradient(to bottom, #f5f7fa 0%, #ffffff 100%)'
+    }}>
       {/* Header */}
-      <Typography variant="h4" gutterBottom fontWeight="bold">
-        Search & Manage Slips
-      </Typography>
-      <Typography variant="subtitle1" color="textSecondary" sx={{ mb: 3 }}>
-        Search by product name, customer, or slip ID. Edit details or cancel slips.
-      </Typography>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" gutterBottom fontWeight="bold" sx={{ 
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          mb: 1
+        }}>
+          Search & Manage Slips
+        </Typography>
+        <Typography variant="subtitle1" color="textSecondary">
+          Search by product name, customer, or slip ID. Edit details or cancel slips.
+        </Typography>
+      </Box>
 
       {/* Simple Search Section */}
-      <Paper sx={{ p: 3, mb: 3 }} elevation={2}>
+      <Paper sx={{ 
+        p: { xs: 2, sm: 3 }, 
+        mb: { xs: 2, sm: 3 },
+        borderRadius: 3,
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+      }} elevation={0}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={8}>
             <TextField
@@ -329,15 +384,27 @@ const SearchSlip = () => {
       </Paper>
 
       {/* Results Section */}
-      <Paper elevation={2}>
+      <Paper elevation={0} sx={{ 
+        borderRadius: 3,
+        overflow: 'hidden',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+      }}>
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow>
+              <TableRow sx={{ 
+                background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                '& .MuiTableCell-head': {
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: { xs: '0.75rem', sm: '0.85rem', md: '0.95rem' },
+                  padding: { xs: '8px', sm: '12px', md: '16px' }
+                }
+              }}>
                 <TableCell><strong>Slip ID</strong></TableCell>
-                <TableCell><strong>Customer</strong></TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}><strong>Customer</strong></TableCell>
                 <TableCell><strong>Date</strong></TableCell>
-                <TableCell><strong>Products</strong></TableCell>
+                <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}><strong>Products</strong></TableCell>
                 <TableCell><strong>Status</strong></TableCell>
                 <TableCell><strong>Total</strong></TableCell>
                 <TableCell><strong>Actions</strong></TableCell>
@@ -345,20 +412,36 @@ const SearchSlip = () => {
             </TableHead>
             <TableBody>
               {searchResults.map((slip) => (
-                <TableRow key={slip._id} hover>
+                <TableRow 
+                  key={slip._id} 
+                  hover
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                      transform: 'scale(1.01)',
+                      transition: 'all 0.2s ease-in-out'
+                    },
+                    transition: 'all 0.2s ease-in-out'
+                  }}
+                >
                   <TableCell>
-                    <Typography variant="body2" fontWeight="bold">
+                    <Typography variant="body2" fontWeight="bold" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                       {slip.slipNumber || slip._id}
                     </Typography>
                     <Chip
                       label={slip.paymentMethod}
                       color={getPaymentMethodColor(slip.paymentMethod)}
                       size="small"
-                      sx={{ mt: 0.5 }}
+                      sx={{ mt: 0.5, fontSize: { xs: '0.65rem', sm: '0.75rem' } }}
                     />
+                    <Box sx={{ display: { xs: 'block', md: 'none' }, mt: 0.5 }}>
+                      <Typography variant="caption" color="textSecondary">
+                        {slip.customerName || 'Walk-in Customer'}
+                      </Typography>
+                    </Box>
                   </TableCell>
                   
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                     <Box>
                       <Typography variant="body2" fontWeight="medium">
                         {slip.customerName || 'Walk-in Customer'}
@@ -372,15 +455,18 @@ const SearchSlip = () => {
                   </TableCell>
                   
                   <TableCell>
-                    <Typography variant="body2">
-                      {new Date(slip.date).toLocaleDateString()}
+                    <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                      {new Date(slip.date || slip.createdAt).toLocaleDateString()}
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
+                      {new Date(slip.date || slip.createdAt).toLocaleTimeString()}
                     </Typography>
                   </TableCell>
                   
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
                     <Box sx={{ maxWidth: 200 }}>
                       {slip.products?.map((product, index) => (
-                        <Typography key={index} variant="body2" noWrap>
+                        <Typography key={index} variant="body2" noWrap sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                           {product.productName} (x{product.quantity})
                         </Typography>
                       ))}
@@ -396,13 +482,16 @@ const SearchSlip = () => {
                   </TableCell>
                   
                   <TableCell>
-                    <Typography variant="body2" fontWeight="bold">
-                      Rs {slip.totalAmount?.toLocaleString()}
+                    <Typography variant="body2" fontWeight="bold" sx={{ 
+                      color: 'success.main',
+                      fontSize: { xs: '0.875rem', sm: '1rem' }
+                    }}>
+                      ₹{slip.totalAmount?.toLocaleString()}
                     </Typography>
                   </TableCell>
                   
                   <TableCell>
-                    <Stack direction="row" spacing={1}>
+                    <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} flexWrap="wrap">
                       <IconButton
                         size="small"
                         color="primary"
@@ -444,12 +533,18 @@ const SearchSlip = () => {
         </TableContainer>
 
         {searchResults.length === 0 && !loading && (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="h6" color="textSecondary">
+          <Box sx={{ 
+            p: 6, 
+            textAlign: 'center',
+            background: 'linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%)',
+            borderRadius: 2
+          }}>
+            <Search sx={{ fontSize: 64, color: 'text.secondary', mb: 2, opacity: 0.5 }} />
+            <Typography variant="h6" color="textSecondary" fontWeight="medium">
               No slips found
             </Typography>
             <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-              {searchTerm ? 'Try a different search term' : 'No slips available'}
+              {searchTerm ? 'Try a different search term' : 'No slips available. Create your first slip to get started!'}
             </Typography>
           </Box>
         )}
@@ -461,8 +556,18 @@ const SearchSlip = () => {
         onClose={() => setOpenEditDialog(false)}
         maxWidth="lg"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+          }
+        }}
       >
-        <DialogTitle>
+        <DialogTitle sx={{ 
+          background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+          color: 'white',
+          fontWeight: 'bold'
+        }}>
           Edit Slip - {selectedSlip?.slipNumber}
         </DialogTitle>
         <DialogContent>
@@ -526,7 +631,17 @@ const SearchSlip = () => {
               </Box>
 
               {editForm.products.map((product, index) => (
-                <Card key={index} sx={{ mb: 2, p: 2 }} variant="outlined">
+                <Card key={index} sx={{ 
+                  mb: 2, 
+                  p: 2,
+                  borderRadius: 2,
+                  border: '1px solid #e0e0e0',
+                  '&:hover': {
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    borderColor: 'primary.main'
+                  },
+                  transition: 'all 0.2s ease-in-out'
+                }} variant="outlined">
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={4}>
                       <TextField
@@ -578,9 +693,16 @@ const SearchSlip = () => {
               ))}
 
               {/* Total Display */}
-              <Box sx={{ p: 2, bgcolor: 'primary.light', color: 'white', borderRadius: 1, mt: 2 }}>
-                <Typography variant="h6" align="center">
-                  Grand Total: Rs {calculateTotal().toLocaleString()}
+              <Box sx={{ 
+                p: 3, 
+                background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                color: 'white', 
+                borderRadius: 2, 
+                mt: 3,
+                boxShadow: '0 4px 15px rgba(25, 118, 210, 0.3)'
+              }}>
+                <Typography variant="h5" align="center" fontWeight="bold">
+                  Grand Total: ₹{calculateTotal().toLocaleString()}
                 </Typography>
               </Box>
 
@@ -603,15 +725,28 @@ const SearchSlip = () => {
             </Box>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenEditDialog(false)}>Cancel</Button>
+        <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5' }}>
+          <Button 
+            onClick={() => setOpenEditDialog(false)}
+            variant="outlined"
+            sx={{ borderRadius: 2 }}
+          >
+            Cancel
+          </Button>
           <Button 
             variant="contained"
             startIcon={<Save />}
             onClick={handleUpdateSlip}
             disabled={loading}
+            sx={{ 
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
+              }
+            }}
           >
-            {loading ? <CircularProgress size={24} /> : 'Save Changes'}
+            {loading ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
           </Button>
         </DialogActions>
       </Dialog>

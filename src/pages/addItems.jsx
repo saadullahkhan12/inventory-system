@@ -150,8 +150,17 @@ const AddItems = () => {
   };
 
   return (
-    <Box sx={{ marginTop: '60px', padding: 3, maxWidth: '1400px', mx: 'auto' }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
+    <Box sx={{ 
+      marginTop: { xs: '70px', sm: '60px' }, 
+      padding: { xs: 2, sm: 3, md: 4 }, 
+      maxWidth: '1400px', 
+      mx: 'auto' 
+    }}>
+      <Paper elevation={0} sx={{ 
+        p: { xs: 2, sm: 3, md: 4 },
+        borderRadius: 3,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+      }}>
         <Typography variant="h4" component="h1" gutterBottom align="center" color="primary">
           Add New Item to Inventory
         </Typography>
@@ -166,7 +175,7 @@ const AddItems = () => {
         </Typography>
 
         <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
             {/* Product Name */}
             <Grid item xs={12} sm={6}>
               <TextField

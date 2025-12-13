@@ -103,7 +103,7 @@ const SlipPDFDocument = ({ slip }) => (
       {/* Customer Info */}
       <View style={styles.customerInfo}>
         <Text>Slip #: {slip.slipNumber || slip._id}</Text>
-        <Text>Date: {new Date(slip.date).toLocaleString()}</Text>
+        <Text>Date: {new Date(slip.date || slip.createdAt).toLocaleString()}</Text>
         <Text>Customer: {slip.customerName}</Text>
         <Text>Phone: {slip.customerPhone}</Text>
       </View>
@@ -283,7 +283,7 @@ function SlipPage() {
           
           <div class="customer-info">
             <div><strong>Slip #:</strong> ${slip.slipNumber || slip._id}</div>
-            <div><strong>Date:</strong> ${new Date(slip.date).toLocaleString()}</div>
+            <div><strong>Date:</strong> ${new Date(slip.date || slip.createdAt).toLocaleString()}</div>
             <div><strong>Customer:</strong> ${slip.customerName}</div>
             <div><strong>Phone:</strong> ${slip.customerPhone}</div>
           </div>
@@ -317,8 +317,8 @@ function SlipPage() {
           </div>
           
           <div class="footer">
-            <div>Thank you for your purchase!</div>
-            <div><strong>— Saeed Auto —</strong></div>
+            <div>Software desgin by Saad </div>
+            <div><strong>03146074093</strong></div>
           </div>
           
           <script>
@@ -370,11 +370,17 @@ function SlipPage() {
   }
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+    <Container maxWidth="md" sx={{ 
+      mt: 4, 
+      mb: 4,
+      minHeight: '100vh'
+    }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Button 
           startIcon={<ArrowBack />} 
           onClick={() => navigate('/slips')}
+          variant="outlined"
+          sx={{ borderRadius: 2 }}
         >
           Back to Slips
         </Button>
@@ -384,6 +390,7 @@ function SlipPage() {
             variant="outlined" 
             startIcon={<Print />}
             onClick={handlePrint}
+            sx={{ borderRadius: 2 }}
           >
             Print
           </Button>
@@ -392,30 +399,53 @@ function SlipPage() {
             startIcon={<Download />}
             onClick={downloadPDF}
             disabled={generatingPDF}
+            sx={{
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
+              }
+            }}
           >
             {generatingPDF ? 'Generating...' : 'Download PDF'}
           </Button>
         </Stack>
       </Stack>
       
-      <Paper elevation={3} sx={{ p: 3 }} id="slip-content">
-        <Typography variant="h4" gutterBottom align="center">
+      <Paper elevation={0} sx={{ 
+        p: 4,
+        borderRadius: 3,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+      }} id="slip-content">
+        <Typography variant="h4" gutterBottom align="center" sx={{
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          fontWeight: 'bold',
+          mb: 3
+        }}>
           Slip Details
         </Typography>
         
         <Box sx={{ mb: 3 }}>
           <Typography><strong>Slip #:</strong> {slip.slipNumber || slip._id}</Typography>
-          <Typography><strong>Date:</strong> {new Date(slip.date).toLocaleString()}</Typography>
+          <Typography><strong>Date:</strong> {new Date(slip.date || slip.createdAt).toLocaleString()}</Typography>
           <Typography><strong>Customer:</strong> {slip.customerName}</Typography>
           <Typography><strong>Phone:</strong> {slip.customerPhone}</Typography>
           <Typography><strong>Payment Method:</strong> {slip.paymentMethod}</Typography>
           {slip.status && <Typography><strong>Status:</strong> {slip.status}</Typography>}
         </Box>
 
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: 'hidden' }}>
           <Table>
             <TableHead>
-              <TableRow>
+              <TableRow sx={{ 
+                background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                '& .MuiTableCell-head': {
+                  color: 'white',
+                  fontWeight: 'bold'
+                }
+              }}>
                 <TableCell><strong>Product</strong></TableCell>
                 <TableCell><strong>Qty</strong></TableCell>
                 <TableCell><strong>Unit Price</strong></TableCell>
@@ -435,11 +465,24 @@ function SlipPage() {
           </Table>
         </TableContainer>
 
-        <Box sx={{ mt: 2, textAlign: 'right' }}>
-          <Typography><strong>Subtotal:</strong> Rs {slip.subtotal?.toLocaleString()}</Typography>
-          <Typography><strong>Tax:</strong> Rs {slip.tax?.toLocaleString()}</Typography>
-          <Typography><strong>Discount:</strong> Rs {slip.discount?.toLocaleString()}</Typography>
-          <Typography variant="h6"><strong>Total: Rs {slip.totalAmount?.toLocaleString()}</strong></Typography>
+        <Box sx={{ 
+          mt: 3, 
+          p: 3,
+          textAlign: 'right',
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%)',
+          borderRadius: 2,
+          border: '1px solid #e0e0e0'
+        }}>
+          <Typography sx={{ mb: 1 }}><strong>Subtotal:</strong> ₹{slip.subtotal?.toLocaleString()}</Typography>
+          <Typography sx={{ mb: 1 }}><strong>Tax:</strong> ₹{(slip.tax || 0).toLocaleString()}</Typography>
+          <Typography sx={{ mb: 1 }}><strong>Discount:</strong> ₹{(slip.discount || 0).toLocaleString()}</Typography>
+          <Typography variant="h5" sx={{ 
+            mt: 2,
+            color: 'success.main',
+            fontWeight: 'bold'
+          }}>
+            <strong>Total: ₹{slip.totalAmount?.toLocaleString()}</strong>
+          </Typography>
         </Box>
 
         {slip.notes && (

@@ -5,7 +5,7 @@ const API_BASE_URL = 'https://inventory-system-back-end.onrender.com/api';
 export const axiosApi = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 15000, // Increased timeout for production
+  timeout: 60000, // Increased timeout for production
 });
 
 // Enhanced request interceptor for debugging
@@ -93,6 +93,9 @@ axiosApi.income = {
 axiosApi.analytics = {
   getDashboard: () => axiosApi.get('/analytics/dashboard'),
   getSalesTrends: (params = {}) => axiosApi.get('/analytics/sales-trends', { params }),
+  getTopProducts: (params = {}) => axiosApi.get('/analytics/top-products', { params }),
+  getInventoryLevels: () => axiosApi.get('/analytics/inventory-levels'),
+  getOrdersByStatus: () => axiosApi.get('/analytics/orders-by-status'),
 };
 
 // Health check function

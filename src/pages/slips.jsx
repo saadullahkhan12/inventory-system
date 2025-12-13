@@ -179,14 +179,36 @@ const Slips = () => {
   }
 
   return (
-    <Box sx={{ maxWidth: 1000, mx: 'auto', mt: 2, p: 2 }}>
-      <Typography variant="h4" fontWeight="bold">
-        Create Sales Slip
-      </Typography>
+    <Box sx={{ 
+      maxWidth: 1200, 
+      mx: 'auto', 
+      mt: { xs: 1, sm: 2 }, 
+      p: { xs: 1.5, sm: 2, md: 3 },
+      minHeight: '100vh',
+      background: 'linear-gradient(to bottom, #f5f7fa 0%, #ffffff 100%)'
+    }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" fontWeight="bold" sx={{ 
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          mb: 1
+        }}>
+          Create Sales Slip
+        </Typography>
+        <Typography variant="subtitle1" color="textSecondary">
+          Add products and create a new sales slip for your customer
+        </Typography>
+      </Box>
 
-      <Paper sx={{ p: 3, mt: 2 }} elevation={2}>
+      <Paper sx={{ 
+        p: { xs: 2, sm: 3, md: 4 }, 
+        mt: { xs: 1, sm: 2 },
+        borderRadius: 3,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+      }} elevation={0}>
         <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
 
             {/* Customer Name */}
             <Grid item xs={12}>
@@ -202,17 +224,37 @@ const Slips = () => {
 
             {/* Items */}
             <Grid item xs={12}>
-              <Typography variant="h6">Items ({formData.items.length})</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  Items ({formData.items.length})
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  startIcon={<AddIcon />} 
+                  onClick={addItem}
+                  sx={{ borderRadius: 2 }}
+                >
+                  Add Item
+                </Button>
+              </Box>
             </Grid>
 
             {formData.items.map((item, index) => (
               <Grid item xs={12} key={index}>
-                <Card variant="outlined">
+                <Card variant="outlined" sx={{
+                  borderRadius: 2,
+                  border: '1px solid #e0e0e0',
+                  '&:hover': {
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    borderColor: 'primary.main'
+                  },
+                  transition: 'all 0.2s ease-in-out'
+                }}>
                   <CardContent>
                     <Grid container spacing={2}>
 
                       {/* Category */}
-                      <Grid item xs={12} sm={3}>
+                      <Grid item xs={12} sm={6} md={3}>
                         <FormControl fullWidth>
                           <InputLabel>Category *</InputLabel>
                           <Select
@@ -229,7 +271,7 @@ const Slips = () => {
                       </Grid>
 
                       {/* Product */}
-                      <Grid item xs={12} sm={3}>
+                      <Grid item xs={12} sm={6} md={3}>
                         <FormControl fullWidth>
                           <InputLabel>Product *</InputLabel>
                           <Select
@@ -251,7 +293,7 @@ const Slips = () => {
                       </Grid>
 
                       {/* Quantity */}
-                      <Grid item xs={6} sm={2}>
+                      <Grid item xs={6} sm={4} md={2}>
                         <TextField
                           fullWidth
                           label="Qty *"
@@ -263,14 +305,14 @@ const Slips = () => {
                       </Grid>
 
                       {/* Total */}
-                      <Grid item xs={6} sm={3}>
-                        <Typography variant="h6" sx={{ mt: 1 }}>
+                      <Grid item xs={6} sm={4} md={3}>
+                        <Typography variant="h6" sx={{ mt: { xs: 0, sm: 1 }, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                           ₹{item.total.toFixed(2)}
                         </Typography>
                       </Grid>
 
                       {/* Remove */}
-                      <Grid item xs={12} sm={1}>
+                      <Grid item xs={12} sm={4} md={1}>
                         <IconButton
                           color="error"
                           onClick={() => removeItem(index)}
@@ -286,34 +328,46 @@ const Slips = () => {
               </Grid>
             ))}
 
-            <Grid item xs={12}>
-              <Button startIcon={<AddIcon />} onClick={addItem}>
-                Add Item
-              </Button>
-            </Grid>
-
             {/* Summary */}
             <Grid item xs={12}>
-              <Card sx={{ p: 2, bgcolor: 'primary.main', color: 'white' }}>
-                <Typography variant="h6">Total Amount</Typography>
-                <Typography variant="h4" fontWeight="bold">
+              <Card sx={{ 
+                p: 3, 
+                background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                color: 'white',
+                borderRadius: 2,
+                boxShadow: '0 4px 15px rgba(25, 118, 210, 0.3)'
+              }}>
+                <Typography variant="h6" sx={{ mb: 1, opacity: 0.9 }}>Total Amount</Typography>
+                <Typography variant="h3" fontWeight="bold" sx={{ mb: 1 }}>
                   ₹{totalAmount.toFixed(2)}
                 </Typography>
-                <Typography variant="body2">Subtotal: ₹{subtotal.toFixed(2)}</Typography>
+                <Typography variant="body2" sx={{ opacity: 0.9 }}>Subtotal: ₹{subtotal.toFixed(2)}</Typography>
               </Card>
             </Grid>
 
             {/* Submit */}
             <Grid item xs={12}>
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                endIcon={<SendIcon />}
-                disabled={loading.submission}
-              >
-                {loading.submission ? <CircularProgress size={24} /> : 'Create Slip'}
-              </Button>
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                  endIcon={<SendIcon />}
+                  disabled={loading.submission}
+                  sx={{
+                    minWidth: 200,
+                    py: 1.5,
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
+                    },
+                    boxShadow: '0 4px 15px rgba(25, 118, 210, 0.3)'
+                  }}
+                >
+                  {loading.submission ? <CircularProgress size={24} color="inherit" /> : 'Create Slip'}
+                </Button>
+              </Box>
             </Grid>
 
           </Grid>
