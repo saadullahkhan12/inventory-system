@@ -71,17 +71,22 @@ const Income = () => {
       minHeight: '100vh',
       background: 'linear-gradient(to bottom, #f5f7fa 0%, #ffffff 100%)'
     }}>
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: { xs: 2, sm: 3, md: 4 } }}>
         <Typography variant="h4" component="h1" sx={{ 
           mb: 1, 
           fontWeight: 'bold',
           background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
           WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
+          WebkitTextFillColor: 'transparent',
+          fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+          fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
         }}>
           Income Management
         </Typography>
-        <Typography variant="subtitle1" color="textSecondary">
+        <Typography variant="subtitle1" color="textSecondary" sx={{
+          fontSize: { xs: '0.875rem', sm: '1rem' },
+          fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+        }}>
           Track and analyze your sales income from slips
         </Typography>
       </Box>
@@ -100,7 +105,7 @@ const Income = () => {
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 1, opacity: 0.9 }}>Total Income</Typography>
                 <Typography variant="h4" fontWeight="bold">
-                  ₹{incomeSummary.totalIncome?.toLocaleString() || 0}
+                  Rs {incomeSummary.totalIncome?.toLocaleString() || 0}
                 </Typography>
               </CardContent>
             </Card>
@@ -116,7 +121,7 @@ const Income = () => {
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 1, opacity: 0.9 }}>Today's Income</Typography>
                 <Typography variant="h4" fontWeight="bold">
-                  ₹{incomeSummary.todayIncome?.toLocaleString() || 0}
+                  Rs {incomeSummary.todayIncome?.toLocaleString() || 0}
                 </Typography>
               </CardContent>
             </Card>
@@ -132,7 +137,7 @@ const Income = () => {
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 1, opacity: 0.9 }}>Monthly Income</Typography>
                 <Typography variant="h4" fontWeight="bold">
-                  ₹{incomeSummary.monthIncome?.toLocaleString() || 0}
+                  Rs {incomeSummary.monthIncome?.toLocaleString() || 0}
                 </Typography>
               </CardContent>
             </Card>
@@ -202,7 +207,7 @@ const Income = () => {
                       fontWeight: 'bold',
                       mb: 1
                     }}>
-                      ₹{income.totalIncome?.toLocaleString()}
+                      Rs {income.totalIncome?.toLocaleString()}
                     </Typography>
                     <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                       {income.productsSold?.[0]?.productName || 'No products'}

@@ -99,11 +99,16 @@ function Dashboard() {
             fontWeight: 'bold',
             background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
             WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
+            WebkitTextFillColor: 'transparent',
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+            fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
           }}>
             Dashboard & Analytics
           </Typography>
-          <Typography variant="subtitle1" color="textSecondary">
+          <Typography variant="subtitle1" color="textSecondary" sx={{
+            fontSize: { xs: '0.875rem', sm: '1rem' },
+            fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+          }}>
             Comprehensive overview of your inventory and sales
           </Typography>
         </Box>
@@ -149,7 +154,7 @@ function Dashboard() {
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 1, opacity: 0.9 }}>Total Revenue</Typography>
                 <Typography variant="h4" fontWeight="bold">
-                  ₹{dashboardData.summary.totalRevenue?.toLocaleString() || 0}
+                  Rs {dashboardData.summary.totalRevenue?.toLocaleString() || 0}
                 </Typography>
               </CardContent>
             </Card>
@@ -164,7 +169,7 @@ function Dashboard() {
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 1, opacity: 0.9 }}>Today's Revenue</Typography>
                 <Typography variant="h4" fontWeight="bold">
-                  ₹{dashboardData.summary.todayRevenue?.toLocaleString() || 0}
+                  Rs {dashboardData.summary.todayRevenue?.toLocaleString() || 0}
                 </Typography>
               </CardContent>
             </Card>
@@ -222,7 +227,7 @@ function Dashboard() {
                   <YAxis />
                   <RechartsTooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="sales" stroke="#1976d2" strokeWidth={2} name="Total Sales (₹)" />
+                  <Line type="monotone" dataKey="sales" stroke="#1976d2" strokeWidth={2} name="Total Sales (Rs)" />
                   <Line type="monotone" dataKey="transactions" stroke="#42a5f5" strokeWidth={2} name="Transactions" />
                 </LineChart>
               </ResponsiveContainer>
@@ -283,7 +288,7 @@ function Dashboard() {
                   <RechartsTooltip />
                   <Legend />
                   <Bar yAxisId="left" dataKey="quantity" fill="#42a5f5" name="Quantity Sold" />
-                  <Bar yAxisId="right" dataKey="revenue" fill="#1976d2" name="Revenue (₹)" />
+                  <Bar yAxisId="right" dataKey="revenue" fill="#1976d2" name="Revenue (Rs)" />
                 </BarChart>
               </ResponsiveContainer>
             </Box>

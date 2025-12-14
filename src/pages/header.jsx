@@ -1,8 +1,10 @@
 import * as React from 'react';
-import { Tabs, Tab, Paper, Box, AppBar, Toolbar, Typography, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, useScrollTrigger, Slide } from '@mui/material';
+import { Tabs, Tab, Paper, Box, AppBar, Toolbar, Typography, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, useScrollTrigger, Slide, Chip } from '@mui/material';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import saeedLogo from '../assets/ChatGPT Image Aug 6, 2025, 02_36_45 AM.png';
 
 // Hide on scroll component
@@ -20,6 +22,46 @@ function Header() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
+  const [pakistanDate, setPakistanDate] = React.useState({
+    date: '',
+    day: '',
+    time: ''
+  });
+
+  // Get Pakistan (Karachi) timezone date and day
+  React.useEffect(() => {
+    const updatePakistanTime = () => {
+      const now = new Date();
+      const pakistanTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Karachi' }));
+      
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const day = days[pakistanTime.getDay()];
+      
+      const dateStr = pakistanTime.toLocaleDateString('en-PK', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      const timeStr = pakistanTime.toLocaleTimeString('en-PK', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+      
+      setPakistanDate({
+        date: dateStr,
+        day: day,
+        time: timeStr
+      });
+    };
+
+    updatePakistanTime();
+    const interval = setInterval(updatePakistanTime, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Handle scroll for shadow
   React.useEffect(() => {
@@ -64,7 +106,7 @@ function Header() {
 
   // Mobile drawer
   const drawer = (
-    <Box sx={{ width: 250, pt: 2 }}>
+      <Box sx={{ width: 250, pt: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <img 
@@ -84,6 +126,40 @@ function Header() {
           <CloseIcon />
         </IconButton>
       </Box>
+      
+      {/* Date & Day in Mobile Drawer */}
+      <Box sx={{ px: 2, mb: 2 }}>
+        <Chip
+          icon={<CalendarTodayIcon />}
+          label={pakistanDate.date}
+          size="small"
+          sx={{
+            mb: 1,
+            width: '100%',
+            justifyContent: 'flex-start',
+            bgcolor: 'rgba(25, 118, 210, 0.1)',
+            color: 'primary.main',
+            fontWeight: 'bold',
+            fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+            fontSize: '0.7rem'
+          }}
+        />
+        <Chip
+          icon={<AccessTimeIcon />}
+          label={`${pakistanDate.day} - ${pakistanDate.time}`}
+          size="small"
+          sx={{
+            width: '100%',
+            justifyContent: 'flex-start',
+            bgcolor: 'rgba(220, 38, 38, 0.1)',
+            color: '#dc2626',
+            fontWeight: 'bold',
+            fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+            fontSize: '0.7rem'
+          }}
+        />
+      </Box>
+      
       <List>
         {navItems.map((item) => (
           <ListItem key={item.path} disablePadding>
@@ -194,6 +270,40 @@ function Header() {
                   }} 
                 />
               </Box>
+            </Box>
+
+            {/* Date & Day Display - Desktop */}
+            <Box sx={{ 
+              display: { xs: 'none', md: 'flex' },
+              alignItems: 'center',
+              gap: 1,
+              mr: 2,
+              flexShrink: 0
+            }}>
+              <Chip
+                icon={<CalendarTodayIcon />}
+                label={pakistanDate.date}
+                size="small"
+                sx={{
+                  bgcolor: 'rgba(25, 118, 210, 0.1)',
+                  color: 'primary.main',
+                  fontWeight: 'bold',
+                  fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+                  fontSize: '0.75rem'
+                }}
+              />
+              <Chip
+                icon={<AccessTimeIcon />}
+                label={`${pakistanDate.day} - ${pakistanDate.time}`}
+                size="small"
+                sx={{
+                  bgcolor: 'rgba(220, 38, 38, 0.1)',
+                  color: '#dc2626',
+                  fontWeight: 'bold',
+                  fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+                  fontSize: '0.75rem'
+                }}
+              />
             </Box>
 
             {/* Navigation - Desktop */}

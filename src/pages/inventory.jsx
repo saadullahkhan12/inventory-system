@@ -209,14 +209,16 @@ export default function Inventory() {
       background: 'linear-gradient(to bottom, #f5f7fa 0%, #ffffff 100%)'
     }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: { xs: 2, sm: 3, md: 4 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography variant="h4" sx={{ 
             mb: 1, 
             fontWeight: 'bold',
             background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
             WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
+            WebkitTextFillColor: 'transparent',
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+            fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
           }}>
             Inventory Management
           </Typography>
@@ -257,7 +259,7 @@ export default function Inventory() {
           }}>
             <CardContent>
               <Typography variant="h6" sx={{ mb: 1, opacity: 0.9 }}>Total Value</Typography>
-              <Typography variant="h4" fontWeight="bold">₹{stats.totalValue.toLocaleString()}</Typography>
+              <Typography variant="h4" fontWeight="bold">Rs {stats.totalValue.toLocaleString()}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -517,7 +519,7 @@ export default function Inventory() {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight="bold" color="success.main">
-                      ₹{item.price?.toLocaleString()}
+                      Rs {item.price?.toLocaleString()}
                     </Typography>
                   </TableCell>
                   <TableCell>
@@ -618,12 +620,12 @@ export default function Inventory() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Price (₹)"
+                label="Price (Rs)"
                 type="number"
                 value={editForm.price}
                 onChange={(e) => handleFormChange('price', e.target.value)}
                 InputProps={{
-                  startAdornment: <InputAdornment position="start">₹</InputAdornment>
+                  startAdornment: <InputAdornment position="start">Rs</InputAdornment>
                 }}
               />
             </Grid>

@@ -20,7 +20,8 @@ const SearchSlip = () => {
 
   // State management
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [allSlips, setAllSlips] = useState([]); // Store all slips from server
+  const [searchResults, setSearchResults] = useState([]); // Filtered results to display
   const [loading, setLoading] = useState(false);
   const [selectedSlip, setSelectedSlip] = useState(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
@@ -38,55 +39,72 @@ const SearchSlip = () => {
     fetchAllSlips();
   }, []);
 
+  // Update search results when search term or allSlips changes
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setSearchResults(allSlips);
+      return;
+    }
+
+    const term = searchTerm.toLowerCase().trim();
+    const filteredSlips = allSlips.filter(slip => {
+      // Search in customer name
+      if (slip.customerName?.toLowerCase().includes(term)) return true;
+      
+      // Search in slip number or ID
+      if (slip.slipNumber?.toLowerCase().includes(term) || 
+          slip._id?.toLowerCase().includes(term)) return true;
+      
+      // Search in product names
+      if (slip.products?.some(p => 
+        p.productName?.toLowerCase().includes(term)
+      )) return true;
+      
+      // Search in customer phone
+      if (slip.customerPhone?.toLowerCase().includes(term)) return true;
+      
+      return false;
+    });
+
+    setSearchResults(filteredSlips);
+    
+    if (filteredSlips.length === 0 && allSlips.length > 0) {
+      showNotification('info', 'No slips found matching your search.');
+    }
+  }, [searchTerm, allSlips]);
+
   // Fetch all slips
   const fetchAllSlips = async () => {
     setLoading(true);
     try {
       const response = await axiosApi.slips.getAll({ limit: 1000 });
-      setSearchResults(response.data.slips || []);
+      const slips = response.data.slips || response.data || [];
+      const slipsArray = Array.isArray(slips) ? slips : [];
+      setAllSlips(slipsArray);
+      // searchResults will be updated by useEffect
     } catch (error) {
       console.error('Error fetching slips:', error);
       showNotification('error', 'Failed to load slips.');
+      setAllSlips([]);
+      setSearchResults([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Simple search by product name
-  const handleSearch = async () => {
-    setLoading(true);
-    try {
-      if (!searchTerm.trim()) {
-        fetchAllSlips();
-        return;
-      }
-
-      const term = searchTerm.toLowerCase();
-      const filteredSlips = searchResults.filter(slip =>
-        slip.products?.some(p => 
-          p.productName?.toLowerCase().includes(term)
-        ) ||
-        slip.customerName?.toLowerCase().includes(term) ||
-        slip.slipNumber?.toLowerCase().includes(term)
-      );
-
-      setSearchResults(filteredSlips);
-      
-      if (filteredSlips.length === 0) {
-        showNotification('info', 'No slips found matching your search.');
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-      showNotification('error', 'Search failed.');
-    } finally {
-      setLoading(false);
+  // Handle search button click
+  const handleSearch = () => {
+    // Search is handled automatically by useEffect
+    // This function is kept for the button click handler
+    if (!searchTerm.trim()) {
+      fetchAllSlips();
     }
   };
 
   // Clear search
   const clearSearch = () => {
     setSearchTerm('');
-    fetchAllSlips();
+    // Results will update automatically via useEffect
   };
 
   // Open edit dialog and populate form
@@ -223,6 +241,7 @@ const SearchSlip = () => {
         showNotification('success', 'Slip updated successfully! Inventory has been adjusted.');
         setOpenEditDialog(false);
         setSelectedSlip(null);
+        // Refresh all slips
         await fetchAllSlips();
       }
       
@@ -254,6 +273,8 @@ const SearchSlip = () => {
       await axiosApi.slips.update(selectedSlip._id, cancelData);
       showNotification('success', 'Slip cancelled successfully! Inventory has been adjusted.');
       setOpenCancelDialog(false);
+      setSelectedSlip(null);
+      // Refresh all slips
       await fetchAllSlips();
       
     } catch (error) {
@@ -315,16 +336,21 @@ const SearchSlip = () => {
       background: 'linear-gradient(to bottom, #f5f7fa 0%, #ffffff 100%)'
     }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: { xs: 2, sm: 3, md: 4 } }}>
         <Typography variant="h4" gutterBottom fontWeight="bold" sx={{ 
           background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
-          mb: 1
+          mb: 1,
+          fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+          fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
         }}>
           Search & Manage Slips
         </Typography>
-        <Typography variant="subtitle1" color="textSecondary">
+        <Typography variant="subtitle1" color="textSecondary" sx={{
+          fontSize: { xs: '0.875rem', sm: '1rem' },
+          fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+        }}>
           Search by product name, customer, or slip ID. Edit details or cancel slips.
         </Typography>
       </Box>
@@ -486,7 +512,7 @@ const SearchSlip = () => {
                       color: 'success.main',
                       fontSize: { xs: '0.875rem', sm: '1rem' }
                     }}>
-                      ₹{slip.totalAmount?.toLocaleString()}
+                      Rs {slip.totalAmount?.toLocaleString()}
                     </Typography>
                   </TableCell>
                   
@@ -702,7 +728,7 @@ const SearchSlip = () => {
                 boxShadow: '0 4px 15px rgba(25, 118, 210, 0.3)'
               }}>
                 <Typography variant="h5" align="center" fontWeight="bold">
-                  Grand Total: ₹{calculateTotal().toLocaleString()}
+                  Grand Total: Rs {calculateTotal().toLocaleString()}
                 </Typography>
               </Box>
 

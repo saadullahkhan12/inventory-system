@@ -98,6 +98,13 @@ axiosApi.analytics = {
   getOrdersByStatus: () => axiosApi.get('/analytics/orders-by-status'),
 };
 
+// History API
+axiosApi.history = {
+  getSlips: (params = {}) => axiosApi.get('/history/slips', { params }),
+  getIncome: (params = {}) => axiosApi.get('/history/income', { params }),
+  getCombined: (params = {}) => axiosApi.get('/history/combined', { params }),
+};
+
 // Health check function
 export const checkBackendHealth = async () => {
   try {

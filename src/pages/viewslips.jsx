@@ -14,7 +14,9 @@ import {
   TableRow,
   Stack,
   Alert,
-  CircularProgress
+  CircularProgress,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import { ArrowBack, Download, Print } from '@mui/icons-material';
 import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
@@ -146,6 +148,8 @@ const SlipPDFDocument = ({ slip }) => (
 function SlipPage() {
   const { slipId } = useParams();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [slip, setSlip] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generatingPDF, setGeneratingPDF] = useState(false);
@@ -371,26 +375,43 @@ function SlipPage() {
 
   return (
     <Container maxWidth="md" sx={{ 
-      mt: 4, 
-      mb: 4,
-      minHeight: '100vh'
+      mt: { xs: 1, sm: 2, md: 4 }, 
+      mb: { xs: 2, sm: 3, md: 4 },
+      minHeight: '100vh',
+      px: { xs: 1, sm: 2 }
     }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+      <Stack 
+        direction={{ xs: 'column', sm: 'row' }} 
+        justifyContent="space-between" 
+        alignItems={{ xs: 'stretch', sm: 'center' }} 
+        spacing={{ xs: 1, sm: 2 }}
+        sx={{ mb: { xs: 2, sm: 3 } }}
+        className="no-print"
+      >
         <Button 
           startIcon={<ArrowBack />} 
           onClick={() => navigate('/slips')}
           variant="outlined"
-          sx={{ borderRadius: 2 }}
+          sx={{ 
+            borderRadius: 2,
+            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+            fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+          }}
         >
           Back to Slips
         </Button>
         
-        <Stack direction="row" spacing={2}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: { xs: '100%', sm: 'auto' } }}>
           <Button 
             variant="outlined" 
             startIcon={<Print />}
             onClick={handlePrint}
-            sx={{ borderRadius: 2 }}
+            sx={{ 
+              borderRadius: 2,
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+              width: { xs: '100%', sm: 'auto' }
+            }}
           >
             Print
           </Button>
@@ -404,7 +425,10 @@ function SlipPage() {
               background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
               '&:hover': {
                 background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
-              }
+              },
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+              width: { xs: '100%', sm: 'auto' }
             }}
           >
             {generatingPDF ? 'Generating...' : 'Download PDF'}
@@ -413,37 +437,80 @@ function SlipPage() {
       </Stack>
       
       <Paper elevation={0} sx={{ 
-        p: 4,
-        borderRadius: 3,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+        p: { xs: 2, sm: 3, md: 4 },
+        borderRadius: { xs: 2, sm: 3 },
+        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+        '@media print': {
+          boxShadow: 'none',
+          borderRadius: 0,
+          p: 2
+        }
       }} id="slip-content">
         <Typography variant="h4" gutterBottom align="center" sx={{
           background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           fontWeight: 'bold',
-          mb: 3
+          mb: { xs: 2, sm: 3 },
+          fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+          fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+          '@media print': {
+            color: '#000',
+            WebkitTextFillColor: '#000',
+            background: 'none'
+          }
         }}>
           Slip Details
         </Typography>
         
-        <Box sx={{ mb: 3 }}>
-          <Typography><strong>Slip #:</strong> {slip.slipNumber || slip._id}</Typography>
-          <Typography><strong>Date:</strong> {new Date(slip.date || slip.createdAt).toLocaleString()}</Typography>
-          <Typography><strong>Customer:</strong> {slip.customerName}</Typography>
-          <Typography><strong>Phone:</strong> {slip.customerPhone}</Typography>
-          <Typography><strong>Payment Method:</strong> {slip.paymentMethod}</Typography>
-          {slip.status && <Typography><strong>Status:</strong> {slip.status}</Typography>}
+        <Box sx={{ 
+          mb: { xs: 2, sm: 3 },
+          fontSize: { xs: '0.875rem', sm: '1rem' },
+          fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+        }}>
+          <Typography sx={{ fontSize: 'inherit', fontFamily: 'inherit' }}>
+            <strong>Slip #:</strong> {slip.slipNumber || slip._id}
+          </Typography>
+          <Typography sx={{ fontSize: 'inherit', fontFamily: 'inherit' }}>
+            <strong>Date:</strong> {new Date(slip.date || slip.createdAt).toLocaleString()}
+          </Typography>
+          <Typography sx={{ fontSize: 'inherit', fontFamily: 'inherit' }}>
+            <strong>Customer:</strong> {slip.customerName}
+          </Typography>
+          <Typography sx={{ fontSize: 'inherit', fontFamily: 'inherit' }}>
+            <strong>Phone:</strong> {slip.customerPhone || 'N/A'}
+          </Typography>
+          <Typography sx={{ fontSize: 'inherit', fontFamily: 'inherit' }}>
+            <strong>Payment Method:</strong> {slip.paymentMethod || 'Cash'}
+          </Typography>
+          {slip.status && (
+            <Typography sx={{ fontSize: 'inherit', fontFamily: 'inherit' }}>
+              <strong>Status:</strong> {slip.status}
+            </Typography>
+          )}
         </Box>
 
-        <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: 'hidden' }}>
-          <Table>
+        <TableContainer component={Paper} sx={{ 
+          borderRadius: { xs: 1, sm: 2 }, 
+          overflow: 'hidden',
+          '@media print': {
+            borderRadius: 0,
+            boxShadow: 'none'
+          }
+        }}>
+          <Table size={isMobile ? 'small' : 'medium'}>
             <TableHead>
               <TableRow sx={{ 
                 background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
                 '& .MuiTableCell-head': {
                   color: 'white',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+                  '@media print': {
+                    background: '#f5f5f5 !important',
+                    color: '#000 !important'
+                  }
                 }
               }}>
                 <TableCell><strong>Product</strong></TableCell>
@@ -455,10 +522,30 @@ function SlipPage() {
             <TableBody>
               {slip.products.map((product, index) => (
                 <TableRow key={index}>
-                  <TableCell>{product.productName}</TableCell>
-                  <TableCell>{product.quantity}</TableCell>
-                  <TableCell>Rs {product.unitPrice?.toLocaleString()}</TableCell>
-                  <TableCell>Rs {product.totalPrice?.toLocaleString()}</TableCell>
+                  <TableCell sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+                  }}>
+                    {product.productName}
+                  </TableCell>
+                  <TableCell sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+                  }}>
+                    {product.quantity}
+                  </TableCell>
+                  <TableCell sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+                  }}>
+                    Rs {product.unitPrice?.toLocaleString()}
+                  </TableCell>
+                  <TableCell sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+                  }}>
+                    Rs {product.totalPrice?.toLocaleString()}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -466,22 +553,49 @@ function SlipPage() {
         </TableContainer>
 
         <Box sx={{ 
-          mt: 3, 
-          p: 3,
+          mt: { xs: 2, sm: 3 }, 
+          p: { xs: 2, sm: 3 },
           textAlign: 'right',
           background: 'linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%)',
-          borderRadius: 2,
-          border: '1px solid #e0e0e0'
+          borderRadius: { xs: 1, sm: 2 },
+          border: '1px solid #e0e0e0',
+          '@media print': {
+            background: '#f9f9f9',
+            border: '1px solid #000'
+          }
         }}>
-          <Typography sx={{ mb: 1 }}><strong>Subtotal:</strong> ₹{slip.subtotal?.toLocaleString()}</Typography>
-          <Typography sx={{ mb: 1 }}><strong>Tax:</strong> ₹{(slip.tax || 0).toLocaleString()}</Typography>
-          <Typography sx={{ mb: 1 }}><strong>Discount:</strong> ₹{(slip.discount || 0).toLocaleString()}</Typography>
-          <Typography variant="h5" sx={{ 
-            mt: 2,
-            color: 'success.main',
-            fontWeight: 'bold'
+          <Typography sx={{ 
+            mb: 1,
+            fontSize: { xs: '0.875rem', sm: '1rem' },
+            fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
           }}>
-            <strong>Total: ₹{slip.totalAmount?.toLocaleString()}</strong>
+            <strong>Subtotal:</strong> Rs {slip.subtotal?.toLocaleString()}
+          </Typography>
+          <Typography sx={{ 
+            mb: 1,
+            fontSize: { xs: '0.875rem', sm: '1rem' },
+            fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+          }}>
+            <strong>Tax:</strong> Rs {(slip.tax || 0).toLocaleString()}
+          </Typography>
+          <Typography sx={{ 
+            mb: 1,
+            fontSize: { xs: '0.875rem', sm: '1rem' },
+            fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+          }}>
+            <strong>Discount:</strong> Rs {(slip.discount || 0).toLocaleString()}
+          </Typography>
+          <Typography variant="h5" sx={{ 
+            mt: { xs: 1, sm: 2 },
+            color: 'success.main',
+            fontWeight: 'bold',
+            fontSize: { xs: '1.25rem', sm: '1.5rem' },
+            fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+            '@media print': {
+              color: '#000'
+            }
+          }}>
+            <strong>Total: Rs {slip.totalAmount?.toLocaleString()}</strong>
           </Typography>
         </Box>
 

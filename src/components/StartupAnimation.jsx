@@ -1,11 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { Box, CircularProgress, Typography, Fade } from '@mui/material';
+import { Box, Typography, Fade, Button } from '@mui/material';
 import { keyframes } from '@emotion/react';
+import saeedLogo from '../assets/ChatGPT Image Aug 6, 2025, 02_36_45 AM.png';
+import { useNavigate } from 'react-router-dom';
 
 const fadeIn = keyframes`
   from {
     opacity: 0;
-    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+  }
+`;
+
+const scaleIn = keyframes`
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(-20px);
+  }
+  50% {
+    transform: scale(1.1) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+`;
+
+const slideUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -13,18 +38,31 @@ const fadeIn = keyframes`
   }
 `;
 
+const shimmer = keyframes`
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+`;
+
 const pulse = keyframes`
   0%, 100% {
+    transform: scale(1);
     opacity: 1;
   }
   50% {
-    opacity: 0.5;
+    transform: scale(1.05);
+    opacity: 0.9;
   }
 `;
 
 function StartupAnimation({ children, isLoading = false }) {
+  const navigate = useNavigate();
   const [showContent, setShowContent] = useState(false);
   const [skipAnimation, setSkipAnimation] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(10);
 
   useEffect(() => {
     // Check if animation was skipped before
@@ -35,17 +73,36 @@ function StartupAnimation({ children, isLoading = false }) {
       return;
     }
 
-    // Show loading animation for max 1.2s
+    // Countdown timer
+    const countdown = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdown);
+          setShowContent(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Auto-hide after 10 seconds
     const timer = setTimeout(() => {
       setShowContent(true);
-    }, 1200);
+      clearInterval(countdown);
+    }, 10000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(countdown);
+    };
   }, [skipAnimation]);
 
-  const handleSkip = () => {
+  const handleContinue = () => {
     setSkipAnimation(true);
     sessionStorage.setItem('animationSkipped', 'true');
+    setShowContent(true);
+    // Navigate to dashboard
+    navigate('/dashboard');
   };
 
   if (skipAnimation || showContent) {
@@ -60,63 +117,164 @@ function StartupAnimation({ children, isLoading = false }) {
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'background.default',
+        background: 'linear-gradient(135deg, #dc2626 0%, #1e40af 50%, #dc2626 100%)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 9999,
         animation: `${fadeIn} 0.5s ease-in`,
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
+          animation: `${shimmer} 3s infinite`,
+          backgroundSize: '2000px 100%'
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'radial-gradient(circle at 50% 50%, rgba(30, 64, 175, 0.3) 0%, transparent 70%)',
+          animation: `${pulse} 3s ease-in-out infinite`
+        }
       }}
       role="status"
       aria-live="polite"
       aria-label="Loading application"
     >
       <Fade in={true} timeout={500}>
-        <Box sx={{ textAlign: 'center' }}>
+        <Box sx={{ 
+          textAlign: 'center',
+          position: 'relative',
+          zIndex: 1
+        }}>
+          {/* Logo with animation */}
           <Box
             sx={{
-              animation: `${pulse} 1.5s ease-in-out infinite`,
-              mb: 3
+              mb: 4,
+              animation: `${scaleIn} 1.2s ease-out`,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
             }}
           >
-            <CircularProgress 
-              size={60} 
-              thickness={4}
+            <Box
               sx={{
-                color: 'primary.main'
+                width: { xs: 140, sm: 180, md: 220 },
+                height: { xs: 140, sm: 180, md: 220 },
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.98)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 25px 70px rgba(0, 0, 0, 0.4), 0 0 40px rgba(220, 38, 38, 0.3)',
+                padding: { xs: 2.5, sm: 3, md: 3.5 },
+                transition: 'transform 0.3s ease',
+                animation: `${pulse} 2s ease-in-out infinite`,
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 30px 80px rgba(0, 0, 0, 0.5), 0 0 50px rgba(30, 64, 175, 0.4)'
+                }
               }}
-            />
+            >
+              <img 
+                src={saeedLogo} 
+                alt="Saeed Auto Logo"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.3))'
+                }}
+              />
+            </Box>
           </Box>
+
+          {/* Company Name */}
           <Typography 
-            variant="h6" 
+            variant="h4"
             sx={{ 
-              mb: 2,
-              background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontWeight: 'bold'
+              mb: 1,
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
+              textShadow: '0 3px 15px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.3)',
+              animation: `${slideUp} 1s ease-out 0.4s both`,
+              fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+              letterSpacing: '0.5px'
             }}
           >
-            Loading Inventory System...
+            Saeed Auto
           </Typography>
+
+          {/* Subtitle */}
           <Typography 
-            variant="body2" 
-            color="textSecondary"
-            sx={{ cursor: 'pointer', textDecoration: 'underline' }}
-            onClick={handleSkip}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleSkip();
-              }
+            variant="h6"
+            sx={{ 
+              mb: 5,
+              color: 'rgba(255, 255, 255, 0.95)',
+              fontWeight: 400,
+              fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' },
+              textShadow: '0 2px 8px rgba(0,0,0,0.3)',
+              animation: `${slideUp} 1s ease-out 0.6s both`,
+              fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
             }}
-            tabIndex={0}
-            role="button"
-            aria-label="Skip loading animation"
           >
-            Skip
+            Admin Dashboard
           </Typography>
+
+          {/* Continue Button */}
+          <Button
+            variant="contained"
+            onClick={handleContinue}
+            sx={{
+              minWidth: { xs: 200, sm: 250 },
+              py: { xs: 1.25, sm: 1.5 },
+              px: { xs: 4, sm: 5 },
+              fontSize: { xs: '1rem', sm: '1.125rem' },
+              fontWeight: 'bold',
+              fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%)',
+              color: '#1e40af',
+              boxShadow: '0 8px 25px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,0.2)',
+              textTransform: 'none',
+              borderRadius: 3,
+              animation: `${slideUp} 1s ease-out 0.8s both`,
+              '&:hover': {
+                background: 'linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0.95) 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 12px 35px rgba(0,0,0,0.4), 0 0 30px rgba(255,255,255,0.3)'
+              },
+              transition: 'all 0.3s ease'
+            }}
+          >
+            Continue
+          </Button>
+
+          {/* Timer Display */}
+          {timeRemaining > 0 && !skipAnimation && (
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                mt: 3,
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                animation: `${slideUp} 1s ease-out 1s both`,
+                fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+              }}
+            >
+              Auto-continue in {timeRemaining} seconds
+            </Typography>
+          )}
         </Box>
       </Fade>
     </Box>
